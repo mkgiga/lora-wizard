@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "LoRA Dataset Grabber",
-  "description": "This extension lets you snatch images from websites and save them to your local storage with tags.",
+  "name": "Dataset Tagger",
+  "description": "This extension lets you save images from websites and tag them in the side panel.",
   "version": "1.0.0",
   "permissions": [
     "storage",
@@ -12,7 +12,7 @@
     "webNavigation",
     "tabs"
   ],
-  
+
   "action": {
     "default_popup": "./popup/popup.html"
   },

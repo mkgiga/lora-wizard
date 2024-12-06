@@ -306,6 +306,41 @@ textarea {
 
     overflow: hidden;
 
+    .image-entry-warning {
+      &[hidden] {
+        display: none;
+      }
+
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backdrop-filter: brightness(1.25) blur(0.25rem);
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      .image-entry-warning-actions {
+        display: flex;
+        flex-direction: row;
+
+        button {
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: var(--text-color);
+          font-size: 1rem;
+          text-shadow: 0 0 0.25rem var(--primary-color);
+          user-select: none;
+
+          &:hover {
+            filter: invert(1);
+          }
+        }
+      }
+    }
+
     img {
       object-fit: cover;
       min-width: 96px;

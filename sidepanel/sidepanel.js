@@ -7,6 +7,47 @@ const windowEventListeners = {
   },
 };
 
+let settings = {
+  "Adding images": [
+    {
+      "id": "warnOnSmallImages",
+      "type": "checkbox",
+      "name": "Warn on small images",
+      "description": "Warn when an image is smaller than the preferred dimensions",
+      "value": true,
+    },
+    {
+      "id": "preferredMinImageWidth",
+      "type": "number",
+      "name": "Preferred minimum image width",
+      "description": "The preferred minimum width for images",
+      "value": 768,
+    },
+    {
+      "id": "preferredMinImageHeight",
+      "type": "number",
+      "name": "Preferred minimum image height",
+      "description": "The preferred minimum height for images",
+      "value": 768,
+    },
+  ],
+  "Tagging": [
+
+  ],
+  "Categories": [
+
+  ],
+  "Keybindings": [
+
+  ],
+  "Appearance": [
+
+  ],
+  "Saving": [
+
+  ],
+}
+
 let backups = {};
 
 function main() {
@@ -31,6 +72,8 @@ function main() {
   document.querySelector(".btn-export").addEventListener("click", () => {
     download("exported");
   });
+
+  document.querySelector("#txt-search").addEventListener("input", onSearch);
 
   document
     .querySelector("#btn-backup-current")
@@ -227,6 +270,63 @@ function initCommandPalette() {
         }
       }
     });
+  }
+}
+
+function onSearch(e) {
+  const text = e.target.value;
+
+  const entries = document.querySelectorAll(".image-entry");
+  let tags = text.split(", ").map((tag) => tag.trim());
+
+  console.log(tags);
+  
+  tags = tags.filter((tag) => tag !== "");
+
+  if (tags.length === 0) {
+    entries.forEach((entry) => entry.removeAttribute("hidden"));
+    return;
+  } else {
+    entries.forEach((entry) => entry.setAttribute("hidden", ""));
+  }
+
+  const or = ["||", " OR "];
+  const and = ["&&", " AND "];
+
+  for (const entry of entries) {
+    const textarea = entry.querySelector("textarea");
+    const entryTags = textarea.value.split(",").map((tag) => tag.trim());
+
+    let show = false;
+
+    for (const tag of tags) {
+      if (tag.startsWith(or) || tag.startsWith(and)) {
+        const operator = tag.startsWith(or) ? or : and;
+        const tagList = tag.split(operator);
+
+        if (operator === or) {
+          show = tagList.some((t) => entryTags.includes(t));
+        } else {
+          show = tagList.every((t) => entryTags.includes(t));
+        }
+      } else {
+        // if the tag contains the substring (even partially), show the entry
+        show = entryTags.some((entryTag) => entryTag.toLocaleLowerCase().includes(tag.toLowerCase()));
+      }
+
+      if (show) {
+        entry.removeAttribute("hidden");
+        break;
+      }
+    }
+
+    if (!show) {
+      entry.setAttribute("hidden", "");
+    }
+
+    if (tags.length === 0) {
+      entry.removeAttribute("hidden");
+    }
   }
 }
 
@@ -956,18 +1056,48 @@ function createImageEntry({
   src = "",
   pageUrl = "",
   tags = ["mature male,", "solo,", "looking at viewer"],
-  target = document.querySelector(".image-entries"),
 }) {
+
   const el = html`
     <div class="image-entry">
       <img src="${src}" title="${src}" page-url="${pageUrl}" />
       <textarea class="image-tags"></textarea>
       <button class="btn-remove-entry material-icons">delete</button>
       <span class="selection-indicator"></span>
+      <span class="image-entry-warning" hidden>
+        <p>This image's dimensions are smaller than preferred.</p>
+        <p>Are you sure you want to continue?</p>
+        <div class="image-entry-warning-actions">
+          <button class="btn-continue"><span class="material-icons">check</span><p>Yes</p></button>
+          <button class="btn-cancel"><span class="material-icons">close</span><p>No</p></button>
+        </div>
+      </span>
     </div>
   `;
 
   const textArea = el.querySelector("textarea");
+  const warning = el.querySelector(".image-entry-warning");
+
+  warning.querySelector(".btn-continue").addEventListener("click", () => {
+    warning.setAttribute("hidden", "");
+  });
+
+  warning.querySelector(".btn-cancel").addEventListener("click", () => {
+    el.remove();
+    save();
+  });
+
+  el.querySelector("img").addEventListener("load", (e) => {
+    const img = e.target;
+    const naturalWidth = img.naturalWidth;
+    const naturalHeight = img.naturalHeight;
+
+    if (naturalWidth < 768 || naturalHeight < 768) {
+      warning.removeAttribute("hidden");
+    } else {
+      warning.setAttribute("hidden", "");
+    }
+  });
 
   textArea.value = tags;
   textArea.addEventListener("input", (e) => {
@@ -975,9 +1105,7 @@ function createImageEntry({
 
     const value = textArea.value;
 
-    if (value.trim().endsWith(",")) {
-      save();
-    }
+    save();
   });
 
   // selecting the entry by clicking on the image
