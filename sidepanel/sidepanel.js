@@ -10,43 +10,34 @@ const windowEventListeners = {
 let settings = {
   "Adding images": [
     {
-      "id": "warnOnSmallImages",
-      "type": "checkbox",
-      "name": "Warn on small images",
-      "description": "Warn when an image is smaller than the preferred dimensions",
-      "value": true,
+      id: "warnOnSmallImages",
+      type: "checkbox",
+      name: "Warn on small images",
+      description:
+        "Warn when an image is smaller than the preferred dimensions",
+      value: true,
     },
     {
-      "id": "preferredMinImageWidth",
-      "type": "number",
-      "name": "Preferred minimum image width",
-      "description": "The preferred minimum width for images",
-      "value": 768,
+      id: "preferredMinImageWidth",
+      type: "number",
+      name: "Preferred minimum image width",
+      description: "The preferred minimum width for images",
+      value: 768,
     },
     {
-      "id": "preferredMinImageHeight",
-      "type": "number",
-      "name": "Preferred minimum image height",
-      "description": "The preferred minimum height for images",
-      "value": 768,
+      id: "preferredMinImageHeight",
+      type: "number",
+      name: "Preferred minimum image height",
+      description: "The preferred minimum height for images",
+      value: 768,
     },
   ],
-  "Tagging": [
-
-  ],
-  "Categories": [
-
-  ],
-  "Keybindings": [
-
-  ],
-  "Appearance": [
-
-  ],
-  "Saving": [
-
-  ],
-}
+  Tagging: [],
+  Categories: [],
+  Keybindings: [],
+  Appearance: [],
+  Saving: [],
+};
 
 let backups = {};
 
@@ -59,7 +50,7 @@ function main() {
 
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === "addImage") {
-      addImageEntries(entryList, { src: info.srcUrl, pageUrl: tab.url });
+      addImageEntries(entryList, false, { src: info.srcUrl, pageUrl: tab.url });
     }
   });
 
@@ -112,7 +103,7 @@ function main() {
       allEntries.forEach((entry) => entry.remove());
 
       if (backup) {
-        addImageEntries(entryList, ...backup);
+        addImageEntries(entryList, true, ...backup);
       }
     });
 
@@ -280,7 +271,7 @@ function onSearch(e) {
   let tags = text.split(", ").map((tag) => tag.trim());
 
   console.log(tags);
-  
+
   tags = tags.filter((tag) => tag !== "");
 
   if (tags.length === 0) {
@@ -311,7 +302,9 @@ function onSearch(e) {
         }
       } else {
         // if the tag contains the substring (even partially), show the entry
-        show = entryTags.some((entryTag) => entryTag.toLocaleLowerCase().includes(tag.toLowerCase()));
+        show = entryTags.some((entryTag) =>
+          entryTag.toLocaleLowerCase().includes(tag.toLowerCase())
+        );
       }
 
       if (show) {
@@ -851,11 +844,12 @@ function randomEmoji() {
 
 function addImageEntries(
   targetList = document.querySelector(".image-entries"),
+  calledByLoad = false,
   ...entryInfos
 ) {
   const infos = [...entryInfos];
 
-  function addImageEntry(entryInfo) {
+  function addImageEntry(entryInfo, calledByLoad = false) {
     const src = entryInfo.src;
     const pageUrl = entryInfo.pageUrl;
 
@@ -875,6 +869,7 @@ function addImageEntries(
       pageUrl,
       tags,
       target: targetList,
+      calledByLoad,
     });
 
     targetList.appendChild(entry);
@@ -883,7 +878,7 @@ function addImageEntries(
   }
 
   for (const info of infos) {
-    addImageEntry(info);
+    addImageEntry(info, calledByLoad);
   }
 
   return targetList;
@@ -1056,46 +1051,59 @@ function createImageEntry({
   src = "",
   pageUrl = "",
   tags = ["mature male,", "solo,", "looking at viewer"],
+  calledByLoad = false,
 }) {
-
   const el = html`
     <div class="image-entry">
       <img src="${src}" title="${src}" page-url="${pageUrl}" />
       <textarea class="image-tags"></textarea>
       <button class="btn-remove-entry material-icons">delete</button>
       <span class="selection-indicator"></span>
-      <span class="image-entry-warning" hidden>
-        <p>This image's dimensions are smaller than preferred.</p>
-        <p>Are you sure you want to continue?</p>
-        <div class="image-entry-warning-actions">
-          <button class="btn-continue"><span class="material-icons">check</span><p>Yes</p></button>
-          <button class="btn-cancel"><span class="material-icons">close</span><p>No</p></button>
-        </div>
-      </span>
+      ${!calledByLoad
+        ? (() => {
+            return `
+          <span class="image-entry-warning" hidden>
+            <p>This image's dimensions are smaller than preferred.</p>
+            <p>Are you sure you want to continue?</p>
+            <div class="image-entry-warning-actions">
+              <button class="btn-continue"><span class="material-icons">check</span><p>Yes</p></button>
+              <button class="btn-cancel"><span class="material-icons">close</span><p>No</p></button>
+            </div>
+          </span>
+        `;
+          })()
+        : ""}
     </div>
   `;
 
   const textArea = el.querySelector("textarea");
-  const warning = el.querySelector(".image-entry-warning");
 
-  warning.querySelector(".btn-continue").addEventListener("click", () => {
-    warning.setAttribute("hidden", "");
-  });
+  if (!calledByLoad) {
+    const warning = el.querySelector(".image-entry-warning");
 
-  warning.querySelector(".btn-cancel").addEventListener("click", () => {
-    el.remove();
-    save();
-  });
+    warning.querySelector(".btn-continue").addEventListener("click", () => {
+      warning.setAttribute("hidden", "");
+    });
+
+    warning.querySelector(".btn-cancel").addEventListener("click", () => {
+      el.remove();
+      save();
+    });
+  }
 
   el.querySelector("img").addEventListener("load", (e) => {
     const img = e.target;
     const naturalWidth = img.naturalWidth;
     const naturalHeight = img.naturalHeight;
 
-    if (naturalWidth < 768 || naturalHeight < 768) {
-      warning.removeAttribute("hidden");
-    } else {
-      warning.setAttribute("hidden", "");
+    if (!calledByLoad) {
+      const warning = el.querySelector(".image-entry-warning");
+      
+      if (naturalWidth < 768 || naturalHeight < 768) {
+        warning.removeAttribute("hidden");
+      } else {
+        warning.setAttribute("hidden", "");
+      }
     }
   });
 
@@ -1332,7 +1340,7 @@ function load() {
           const images = data.images;
 
           for (const image of images) {
-            addImageEntries(container, image);
+            addImageEntries(container, true, image);
           }
         });
       });
@@ -1348,7 +1356,7 @@ function load() {
     const images = data.images;
 
     for (const image of images) {
-      addImageEntries(container, image);
+      addImageEntries(container, true, image);
     }
   });
 }
@@ -1417,14 +1425,13 @@ async function download(filename = "exported.zip") {
  */
 async function openProjectDialog() {
   /**
-     * @type {FileSystemDirectoryHandle}
-     */
+   * @type {FileSystemDirectoryHandle}
+   */
   const dirHandle = await window.showDirectoryPicker();
 
   for await (const entry of dirHandle.values()) {
     console.log(entry);
   }
-
 }
 
 function syncImageAttributes() {
