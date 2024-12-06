@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <title>Sidebar</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./sidepanel.css" />
+    <script type="module" src="../dep/emoji-picker-element/index.js"></script>
+  </head>
+
+  <body>
+    <header>
+      <svg class="image-tagger-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+        <g fill="none" fill-rule="evenodd">
+          <path fill="#ffffff" fill-opacity=".54" d="M24 2C12.954 2 4 10.954 4 22s8.954 20 20 20 20-8.954 20-20S35.046 2 24 2zm0 36c-9.941 0-18-8.059-18-18S14.059 2 24 2s18 8.059 18 18-8.059 18-18 18z"/>
+          <path fill="#ffffff" fill-opacity=".54" d="M33.293 33.293l-5.657-5.657 1.414-1.414 5.657 5.657-1.414 1.414zM22 26c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10zm0-18c-4.418 0-8 3.582-8 8s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8z"/>
+        </g>
+      </svg>
+
+      <h2>Image Tagger</h2>
+
+      <div class="project-picker-container">
+        
+        <div id="project-picker-actions">
+          <button class="btn-new-project material-icons" disabled>add</button>
+          <button class="btn-delete-project material-icons" disabled>delete</button>
+        </div>
+        <select id="sel-project-picker" disabled>
+          <option value="Untitled Project">Untitled Project</option>
+        </select>
+        
+      </div>
+
+    </header>
+    <div id="top-menu" class="top-bar">
+      
+      <button class="btn-save material-icons" title="Save the current state of the project.">save</button>
+      <button class="btn-load material-icons" title="Load a previously saved project." disabled>folder_open</button>
+      <button class="btn-export material-icons" title="Download the dataset as a zip file">cloud_download</button>
+      
+
+      <input type="search" class="search-bar" placeholder="Search tags ...">
+      
+
+      <button class="btn-search material-icons">settings</button>
+
+      <div class="menu-separator"></div>
+
+      <div class="backups-container">
+        <button id="btn-backup-current" class="btn-backup">
+          <span class="material-icons">backup</span>
+          <p>Backup</p>
+        </button>
+        <select id="sel-backups">
+
+        </select>
+        <button id="btn-restore-backup" class="btn-backup">
+          <span class="material-icons">restore</span>
+          <p>Restore</p>
+        </button>
+
+        <button id="btn-delete-backup" class="btn-backup">
+          <span class="material-icons">delete</span>
+          <p>Delete</p>
+        </button>
+      </div>
+    </div>
+
+    <div class="image-entries" id="image-entries">
+      
+    </div>
+
+    <div id="bottom-panel">
+
+      <div class="top-bar" id="tabs-container">
+        <button class="tab" id="tab-categories" active for="categories-container">Categories</button>
+        <button class="tab" id="tab-queries" for="queries">Commands</button>
+        <button class="tab" id="tab-settings" for="settings">Settings</button>
+      </div>
+
+      <div class="categories-container tab-child" id="categories-container" active>
+
+        <div class="saved-tags" id="saved-tags">
+          <div class="top-bar">
+            <button class="btn-add-category material-icons" id="btn-add-category">add</button>
+          </div>
+          <div class="tag-categories">
+            
+          </div>
+        </div>
+      </div>
+
+      <div class="queries tab-child" id="queries">
+        
+        <div class="top-bar" id="query-top-bar">
+
+        </div>
+
+        <div class="left-bar">
+          <ul id="command-palette">
+            <li class="query-command" id="cmd-select-entries">
+              <span class="query-component-top-bar">
+                <div class="query-command-icons">
+                  <span class="material-icons">search</span>
+                  <span class="material-icons">add</span>
+                </div>
+                <span class="query-component-title">
+                  Selection: Select entries...
+                </span>
+              </span>
+              <span class="command-params">
+                <span class="param">
+                  <label for="txt-select-entries">With tags:</label>
+                  <span class="wrappable-text-input" id="txt-select-entries-containing-tags" title="Containing tags" placeholder="Containing tags" contenteditable="true"> </span>
+                </span> 
+                <span class="param">
+                  <label for="txt-select-entries">Without tags:</label>
+                  <span class="wrappable-text-input" id="txt-select-entries-not-containing-tags" title="Not containing tags" placeholder="Not containing tags" contenteditable="true"> </span>
+                </span>
+              </span>
+            </li>
+            <li class="query-command" id="cmd-deselect-entries">
+              <span class="query-component-top-bar">
+                <div class="query-command-icons">
+                  <span class="material-icons">search</span>
+                  <span class="material-icons">add</span>
+                </div>
+                <span class="query-component-title">
+                  Selection: Deselect entries...
+                </span>
+              </span>
+              <span class="command-params">
+                <span class="param">
+                  <label for="txt-deselect-entries">With tags:</label>
+                  <span class="wrappable-text-input" id="txt-deselect-entries-containing-tags" title="Containing tags" placeholder="Containing tags" contenteditable="true"></span>
+                </span>
+                <span class="param">
+                  <label for="txt-deselect-entries">Without tags:</label>
+                  <span class="wrappable-text-input" id="txt-deselect-entries-not-containing-tags" title="Not containing tags" placeholder="Not containing tags" contenteditable="true"></span>
+                </span>
+              </span>
+            </li>
+            <li class="query-command" id="cmd-add-entries">
+              <span class="query-component-top-bar">
+                <div class="query-command-icons">
+                  <span class="material-icons">search</span>
+                  <span class="material-icons">add</span>
+                </div>
+                <span class="query-component-title">
+                  Selection: Add entries...
+                </span>
+              </span>
+              <span class="command-params">
+                <span class="param">
+                  <label for="txt-add-entries">With tags:</label>
+                  <span class="wrappable-text-input" id="txt-add-entries-containing-tags" title="Containing tags" placeholder="Containing tags" contenteditable="true"></span>
+                </span>
+                <span class="param">
+                  <label for="txt-add-entries">Without tags:</label>
+                  <span class="wrappable-text-input" id="txt-add-entries-not-containing-tags" title="Not containing tags" placeholder="Not containing tags" contenteditable="true"></span>
+                </span>
+              </span>
+            </li>
+            
+            <hr class="command-separator">
+            <li class="query-command" id="cmd-add-tags">
+              <span class="query-component-top-bar">
+                <div class="query-command-icons">
+                  <span class="material-icons">tag</span>
+                  <span class="material-icons">add</span>
+                </div>
+                <span class="query-component-title">
+                  Tags: Add tags
+                </span>
+              </span>
+              <span class="command-params">
+                <span class="param">
+                  <label for="txt-add-tags">Tags</label>
+                  <span class="wrappable-text-input" id="txt-add-tags" title="Tags" placeholder="Tags" contenteditable="true"></span>
+                </span>
+                <span class="param">
+                  <label for="sel-add-tags-where">Where</label>
+                  <select id="sel-add-tags-where">
+                    <option value="end">After (same order)</option>
+                    <option value="start">Before (same order)</option>
+                    <option value="endRandomOrder">After (random order)</option>
+                    <option value="startRandomOrder">Before (random order)</option>
+                    <option value="randomPositions">Randomly</option>
+                  </select>
+                </span>
+                <span class="param">
+                  <label for="chk-add-tags-preserve-first-tag">Preserve first tag</label>
+                  <input type="checkbox" id="chk-add-tags-preserve-first-tag">
+                </span>
+              </span>
+            </li>
+            <li class="query-command" id="cmd-remove-tags">
+              <span class="query-component-top-bar">
+                <div class="query-command-icons">
+                  <span class="material-icons">tag</span>
+                  <span class="material-icons">delete</span>
+                </div>
+                <span class="query-component-title">
+                  Tags: Remove tags
+                </span>
+              </span>
+              <span class="command-params">
+                <span class="param">
+                  <label for="txt-remove-tags">Tags</label>
+                  <span class="wrappable-text-input" id="txt-remove-tags" title="Tags" placeholder="Tags" contenteditable="true"></span>
+                </span>
+              </span>
+            </li>
+            <li class="query-command" id="cmd-replace-tags">
+              <span class="query-component-top-bar">
+                <div class="query-command-icons">
+                  <span class="material-icons">tag</span>
+                  <span class="material-icons">swap_horiz</span>
+                </div>
+                <span class="query-component-title">
+                  Tags: Replace tags A with B
+                </span>
+              </span>
+              <span class="command-params">
+                <span class="param">
+                  <label for="txt-replace-a">Replace</label>
+                  <span class="wrappable-text-input" id="txt-replace-a" title="Tag A" placeholder="Tag A" contenteditable="true"></span>
+                </span>
+                <span class="param">
+                  <label for="txt-replace-b">with</label>
+                  <span class="wrappable-text-input" id="txt-replace-b" title="Tag B" placeholder="Tag B" contenteditable="true"></span>
+                </span>
+              </span>
+            </li>
+            
+            <li class="query-command" id="cmd-shuffle-tags">
+              <span class="query-component-top-bar">
+                <div class="query-command-icons">
+                  <span class="material-icons">tag</span>
+                  <span class="material-icons">shuffle</span>
+                </div>
+                <span class="query-component-title">
+                  Tags: Shuffle tags
+                </span>
+              </span>
+              <span class="command-params">
+                <span class="param">
+                  <label for="txt-shuffle-tags">Tags</label>
+                  <span class="wrappable-text-input" id="txt-shuffle-tags-include" title="Include tags" placeholder="All (default)" contenteditable="true"> </span>
+                </span>
+                <span class="param">
+                  <label for="txt-shuffle-tags">Exclude tags</label>
+                  <span class="wrappable-text-input" id="txt-shuffle-tags-exclude" title="Exclude tags" placeholder="excludetag, excludetag2" contenteditable="true"></span>
+                </span>
+              </span>
+            </li>
+
+            <li class="query-command" id="cmd-booru-autotag" disabled title="Coming soon :&#41;">
+              <span class="query-component-top-bar">
+                <div class="query-command-icons">
+                  <span class="material-icons">tag</span>
+                  <span class="material-icons">auto_awesome</span>
+                </div>
+                <span class="query-component-title">
+                  Tags: Auto-add booru tags
+                </span>
+              </span>
+              <span class="command-params">
+                <span class="param">
+                  <label for="chk-include-copyrights">Copyright</label>
+                  <input type="checkbox" id="chk-include-copyrights" checked>
+                </span>
+                <span class="param">
+                  <label for="chk-include-characters">Characters</label>
+                  <input type="checkbox" id="chk-include-characters" checked>
+                </span>
+                <span class="param">
+                  <label for="chk-include-artists">Artists</label>
+                  <input type="checkbox" id="chk-include-artists" checked>
+                </span>
+                <span class="param">
+                  <label for="chk-include-general">General</label>
+                  <input type="checkbox" id="chk-include-general" checked>
+                </span>
+                <span class="param">
+                  <label for="chk-include-meta">Meta</label>
+                  <input type="checkbox" id="chk-include-meta" checked>
+                </span>
+                <span class="param">
+                  <label for="sel-booru-autotag-where">Where</label>
+                  <select id="sel-booru-autotag-where">
+                    <option value="end">After (same order)</option>
+                    <option value="start">Before (same order)</option>
+                    <option value="endRandomOrder">After (random order)</option>
+                    <option value="startRandomOrder">Before (random order)</option>
+                    <option value="randomPositions">Randomly</option>
+                  </select>
+                </span>
+              </span>
+            </li>
+
+            <hr class="command-separator">
+
+          </ul>
+
+          <div class="commands-bottom-bar">
+            <button class="btn-add-command material-icons">add</button>
+          </div>
+        </div>
+        <div class="query-container">
+          <div class="query-container-top-bar">
+            <button class="material-icons" id="btn-run-query">play_arrow</button>
+            <button class="material-icons" id="btn-preview-query-result">visibility</button>
+            <button class="material-icons" id="btn-clear-query">delete</button>
+          </div>
+          <ul class="query" id="query">
+          
+          </ul>
+          <div class="commands-bottom-bar">
+            <button class="btn-clear-all-commands material-icons">playlist_remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Container for entries that have been deleted -->
+    <div id="deleted-entries" hidden>
+      <div class="top-bar">
+        <h3>Deleted entries</h3>
+        <button class="btn-restore-all-deleted material-icons">restore</button>
+        <button class="btn-delete-all-deleted material-icons">delete</button>
+      </div>
+
+      <ul class="deleted-entries">
+
+      </ul>
+    </div>
+    <script src="../dep/jszip.js"></script>
+    <script src="./sidepanel.js" type="module"></script>
+  </body>
+</html>
