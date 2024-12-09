@@ -48,7 +48,6 @@ function main() {
   const entryList = document.querySelector("#image-entries");
 
   chrome.contextMenus.onClicked.addListener((info, tab) => {
-
     if (info.menuItemId === "addImage") {
       addImageEntries(entryList, false, { src: info.srcUrl, pageUrl: tab.url });
     }
@@ -71,38 +70,44 @@ function main() {
     }
   });
 
-  
+  document
+    .querySelector("#btn-restore-all-recycled")
+    .addEventListener("click", () => {
+      const entries = document.querySelectorAll(
+        "#recycle-bin-entries .image-entry"
+      );
 
-  document.querySelector("#btn-restore-all-recycled").addEventListener("click", () => {
-    const entries = document.querySelectorAll("#recycle-bin-entries .image-entry");
+      entries.forEach((entry) => {
+        console.log("Restoring entry: ", entry);
+        const cloned = entry.cloneNode(true);
+        entry.remove();
 
-    entries.forEach((entry) => {
-      console.log("Restoring entry: ", entry);
-      const cloned = entry.cloneNode(true);
-      entry.remove();
+        const src = cloned.querySelector("img").src;
+        const tags = cloned.querySelector("textarea").value.split(", ");
 
-      const src = cloned.querySelector("img").src;
-      const tags = cloned.querySelector("textarea").value.split(", ");
+        const newEntry = createImageEntry({ src, tags, target: entryList, calledByLoad: true });
 
-      const newEntry = createImageEntry({ src, tags, target: entryList });
+        entryList.appendChild(newEntry);
+      });
 
-      entryList.appendChild(newEntry);
+      save();
     });
 
-    save();
-  });
+  document
+    .querySelector("#btn-clear-recycle-bin")
+    .addEventListener("click", () => {
+      console.log("Clearing recycle bin...");
+      const entries = document.querySelectorAll(
+        "#recycle-bin-entries .image-entry"
+      );
 
-  document.querySelector("#btn-clear-recycle-bin").addEventListener("click", () => {
-    console.log("Clearing recycle bin...");
-    const entries = document.querySelectorAll("#recycle-bin-entries .image-entry");
+      entries.forEach((entry) => {
+        console.log("Removing entry: ", entry);
+        entry.remove();
+      });
 
-    entries.forEach((entry) => {
-      console.log("Removing entry: ", entry);
-      entry.remove();
+      save();
     });
-
-    save();
-  });
 
   document.querySelector(".handle-button").addEventListener("click", () => {
     document.querySelector("#recycle-bin").toggleAttribute("active");
@@ -110,29 +115,30 @@ function main() {
 
   document.querySelector(".btn-save").addEventListener("click", save);
 
+  // project import
   document
     .querySelector(".btn-load")
     .addEventListener("click", openProjectDialog);
 
+  // project export
   document.querySelector(".btn-export").addEventListener("click", () => {
     download("exported");
   });
 
-  /** @type {HTMLParagraphElement} */
-  const projectStatsTags = document.querySelector("#project-stats-tags");
-  const projectStatsEntries = document.querySelector("#project-stats-entries");
-  const projectStatsImgAvg = document.querySelector(
-    "#project-stats-tags-per-image"
-  );
-
+  // searching the main entry list
   document.querySelector("#txt-search").addEventListener("input", onSearch);
+
+  
 
   document
     .querySelector("#btn-backup-current")
     .addEventListener("click", () => {
       const date = new Date().toLocaleString();
 
-      const allEntries = document.querySelectorAll("#image-entries .image-entry"); // get all entries from the main list
+      const allEntries = document.querySelectorAll(
+        "#image-entries .image-entry"
+      ); // get all entries from the main list
+
       const images = [];
       const allCategories = document.querySelectorAll(".tag-category");
       const categories = [];
@@ -140,17 +146,27 @@ function main() {
 
       allEntries.forEach((entry) => {
         const img = entry.querySelector("img").src;
-        const tags = entry.querySelector("textarea").value.split(", ").map((tag) => tag.trim()).filter((tag) => tag !== "");
-        const pageUrl = entry.querySelector("[page-url]").getAttribute("page-url");
+        const tags = entry
+          .querySelector("textarea")
+          .value.split(", ")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag !== "");
+        const pageUrl = entry
+          .querySelector("[page-url]")
+          .getAttribute("page-url");
 
         images.push({ src: img, tags, pageUrl });
       });
 
       allCategories.forEach((category) => {
         const name = category.querySelector(".tag-category-name").textContent;
-        const tags = category.querySelectorAll(".visual-tag-wrapper .visual-tag").entries().map(([i, tag]) => tag.textContent.trim()).filter((tag) => tag !== "");
+        const tags = category
+          .querySelectorAll(".visual-tag-wrapper .visual-tag")
+          .entries()
+          .map(([i, tag]) => tag.textContent.trim())
+          .filter((tag) => tag !== "");
         const emoji = category.querySelector(".emoji-icon").textContent;
-        
+
         categories.push({ name, tags, emoji });
       });
 
@@ -165,11 +181,14 @@ function main() {
       option.value = date;
       option.textContent = date;
       option.selected = true;
-      
+
       // associate the backup object with the option element
       option.backup = backup;
 
       select.appendChild(option);
+
+      // set the <select> to focus on the new option
+      select.value = date;
 
       save();
     });
@@ -181,21 +200,79 @@ function main() {
       const date = select.value;
       const backup = backups[date];
 
-      // clear all entries
-      const allEntries = document.querySelectorAll(".image-entry");
-
-      allEntries.forEach((entry) => entry.remove());
-
-      if (backup) {
-        addImageEntries(entryList, true, ...backup);
+      if (!backup) {
+        return;
       }
+
+      promptDialog({
+        title: "Restore backup",
+        message:
+          "Are you sure you want to restore this backup? This will overwrite the current project.",
+        options: [
+          {
+            text: "Yes",
+            onclick: (e) => {
+              const entries = document.querySelectorAll(
+                "#image-entries .image-entry"
+              );
+              const categories = document.querySelectorAll(".tag-category");
+
+              entries.forEach((entry) => entry.remove());
+              categories.forEach((category) => category.remove());
+
+              addImageEntries(
+                document.querySelector("#image-entries"),
+                true,
+                ...backup.images
+              );
+
+              backup.categories.forEach((category) => {
+                const tagCategory = createTagCategory(category);
+                document
+                  .querySelector(".tag-categories")
+                  .appendChild(tagCategory);
+              });
+
+              save();
+            },
+          },
+
+          {
+            text: "No",
+            onclick: (e) => {
+              prompt.close();
+            },
+          }
+        ],
+      });
     });
 
   document.querySelector("#btn-delete-backup").addEventListener("click", () => {
     const select = document.querySelector("#sel-backups");
     const date = select.value;
 
-    delete backups[date];
+    if (backups[date]) {
+      promptDialog({
+        title: "Delete backup",
+        message: "Are you sure you want to delete this backup?",
+        options: [
+          {
+            text: "Yes",
+            onclick: (e) => {
+              delete backups[date];
+              select.querySelector(`option[value="${date}"]`).remove();
+              save();
+            },
+          },
+          {
+            text: "No",
+            onclick: (e) => {
+              prompt.close();
+            },
+          },
+        ],
+      });
+    }
   });
 
   window.addEventListener("keydown", (e) => {
@@ -684,8 +761,6 @@ function addTagsToContainer(containerElement, ...tags) {
 function createTagCategory({ name = "Category", tags = [], emoji = "" }) {
   const el = html`
     <div class="tag-category" name="${name}">
-      
-      
       <div class="tag-category-inner">
         <div class="tag-category-header">
           <h4 class="tag-category-name" contenteditable>${name}</h4>
@@ -701,15 +776,17 @@ function createTagCategory({ name = "Category", tags = [], emoji = "" }) {
             arrow_downward
           </button>
         </div>
-      </div>
 
-      <div class="tag-category-actions">
+        <div class="tag-category-actions">
         <button class="btn-category-add-tag material-icons">add</button>
         <button class="btn-category-remove material-icons">delete</button>
         <button class="btn-category-clear-tags material-icons">
           clear_all
         </button>
       </div>
+      </div>
+
+      
     </div>
   `;
 
@@ -988,17 +1065,17 @@ function onImportedTags({
 
   // doesn't exist, so let's add it
   if (!entry) {
-    addImageEntries(
-      document.querySelector(".image-entries"),
-      false,
-      { src: imageSrc, tags: flattened, pageUrl }
-    );
+    addImageEntries(document.querySelector(".image-entries"), false, {
+      src: imageSrc,
+      tags: flattened,
+      pageUrl,
+    });
   } else {
     // it exists, but we can still update the tags
     let textarea = entry.querySelector("textarea");
     if (!textarea) {
       textarea = entry.parentElement.querySelector("textarea");
-      
+
       if (!textarea) {
         throw new Error("No textarea found");
       }
@@ -1329,9 +1406,8 @@ function createImageEntry({
       }
     }
   };
-  
-  el.querySelector(".btn-remove-entry").addEventListener("click", () => {
 
+  el.querySelector(".btn-remove-entry").addEventListener("click", () => {
     const recycleBin = document.getElementById("recycle-bin");
 
     // <ul id="recycle-bin-entries"></ul>
@@ -1391,7 +1467,7 @@ function save() {
     const backup = backups[date];
     const images = backup.images || [];
     const categories = backup.categories || [];
-    
+
     const _images = [];
     const _categories = [];
 
@@ -1406,7 +1482,6 @@ function save() {
     }
 
     for (const _category of Object.values(categories)) {
-
       const category = {
         name: _category.name,
         tags: _category.tags,
@@ -1421,16 +1496,18 @@ function save() {
     console.log("Saved backup: ", savedBackups, "...");
   }
 
-  chrome.storage.local.set({ images, categories, backups: savedBackups }, () => {
-    console.log("Saved: ", { images, categories, backups: savedBackups });
-  });
+  chrome.storage.local.set(
+    { images, categories, backups: savedBackups },
+    () => {
+      console.log("Saved: ", { images, categories, backups: savedBackups });
+    }
+  );
 }
 
 function load() {
   let exit = false;
 
   chrome.storage.local.get("backups", (data) => {
-
     // if no backups object exists, create it
     if (!data.backups) {
       chrome.storage.local.set({ backups: {} }, () => {
@@ -1440,15 +1517,15 @@ function load() {
       });
     } else {
       console.log("Backups found: ", data.backups);
-      
+
       // load the backups
       backups = data.backups;
-      
+
       const select = document.querySelector("#sel-backups");
 
       for (const date of Object.keys(backups)) {
         const backup = backups[date];
-        
+
         const option = document.createElement("option");
         option.value = date;
         option.textContent = date;
@@ -1598,19 +1675,70 @@ async function download(filename = "exported.zip") {
 }
 
 /**
- * Prompt the user to select a file to import via
- * the operating system's file picker dialog.
+ * Prompt the user to select a zip file to import
  */
 async function openProjectDialog() {
-  /**
-   * @type {FileSystemDirectoryHandle}
-   */
-  const dirHandle = await window.showDirectoryPicker();
 
-  for await (const entry of dirHandle.values()) {
-    console.log(entry);
-  }
+  // first, confirm if the user wants to save the current project
+  const prompt = promptDialog({
+    title: "Save current project?",
+    message: "Do you want to save the current project before importing?",
+
+    options: [
+      {
+        text: "Yes",
+        onclick: () => {
+          save();
+          prompt.close();
+        },
+      },
+      {
+        text: "No",
+        onclick: () => {
+          prompt.close();
+        },
+      },
+    ],
+  });
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".zip";
+  input.multiple = true;
+  
+  input.addEventListener("change", async (e) => {
+    const files = e.target.files;
+    const entries = [];
+
+    for (const file of files) {
+      const zip = await JSZip.loadAsync(file);
+      const imageFiles = zip.file(/^.*\.png$/);
+      const tagFiles = zip.file(/^.*\.txt$/);
+
+      for (const imageFile of imageFiles) {
+        const fileName = imageFile.name.replace(/\.png$/, "");
+        const tagFile = tagFiles.find((file) => file.name === `${fileName}.txt`);
+
+        if (!tagFile) {
+          // just add the image without empty tags
+          entries.push({ src: imageFile.name, tags: [] });
+          continue;
+        }
+
+        const tags = await tagFile.async("text");
+        entries.push({ src: imageFile.name, tags: tags.split(", ").map((tag) => tag.trim().replace(/, $/, "")) });
+      }
+
+      addImageEntries(document.querySelector(".image-entries"), ...entries);
+    }
+  });
+
+  input.click();
+
+  return input;
 }
+
+
 
 function syncImageAttributes() {
   const entries = document.querySelectorAll(".image-entry");
@@ -1651,24 +1779,33 @@ function promptDialog({
   title = "Warning",
   message = "Are you sure?",
   options = [
-    { text: "Yes", onclick: (e) => { prompt.close(); } },
-    { text: "No", onclick: (e) => { prompt.close(); } },
+    {
+      text: "Yes",
+      onclick: (e) => {
+        prompt.close();
+      },
+    },
+    {
+      text: "No",
+      onclick: (e) => {
+        prompt.close();
+      },
+    },
   ],
   defaultOption = "Yes",
 }) {
   const prompt = html`
     <div class="prompt-dialog">
       <div class="prompt-inner">
-        <div class="top-bar">
+        <div class="top-bar-transparent">
           <h3>${title}</h3>
           <button class="btn-close material-icons">close</button>
         </div>
+        <div class="prompt-message">
+          <p>${message}</p> 
+        </div>
         <div class="prompt-actions">
-          ${options.map(
-            (option) => html`
-              <button>${option.text}</button>
-            `
-          )}
+          ${options.map((option) => `<button>${option.text}</button>`).join("")}
         </div>
       </div>
     </div>
@@ -1698,6 +1835,65 @@ function promptDialog({
   document.body.appendChild(prompt);
 
   return prompt;
+}
+
+function backupCurrentProject() {
+  const date = new Date().toLocaleString();
+
+  const allEntries = document.querySelectorAll("#image-entries .image-entry"); // get all entries from the main list
+
+  const images = [];
+  const allCategories = document.querySelectorAll(".tag-category");
+  const categories = [];
+  const backup = {};
+
+  allEntries.forEach((entry) => {
+    const img = entry.querySelector("img").src;
+    const tags = entry
+      .querySelector("textarea")
+      .value.split(", ")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag !== "");
+    const pageUrl = entry
+      .querySelector("[page-url]")
+      .getAttribute("page-url");
+
+    images.push({ src: img, tags, pageUrl });
+  });
+
+  allCategories.forEach((category) => {
+    const name = category.querySelector(".tag-category-name").textContent;
+    const tags = category
+      .querySelectorAll(".visual-tag-wrapper .visual-tag")
+      .entries()
+      .map(([i, tag]) => tag.textContent.trim())
+      .filter((tag) => tag !== "");
+    const emoji = category.querySelector(".emoji-icon").textContent;
+
+    categories.push({ name, tags, emoji });
+  });
+
+  backup.images = images;
+  backup.categories = categories;
+
+  backups[date] = backup;
+
+  const select = document.querySelector("#sel-backups");
+  const option = document.createElement("option");
+
+  option.value = date;
+  option.textContent = date;
+  option.selected = true;
+
+  // associate the backup object with the option element
+  option.backup = backup;
+
+  select.appendChild(option);
+
+  // set the <select> to focus on the new option
+  select.value = date;
+
+  save();
 }
 
 document.addEventListener("DOMContentLoaded", main);

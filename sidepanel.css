@@ -561,6 +561,8 @@ textarea {
   height: 100%;
   width: 100%;
 
+  overflow: scroll;
+
   .tag-categories {
     display: flex;
     flex-direction: column;
@@ -569,10 +571,11 @@ textarea {
     align-content: flex-start;
 
     width: 100%;
-    row-gap: 0.5rem;
+    height: 100%;
+
     column-gap: 0;
 
-    overflow: auto;
+    overflow-y: scroll;
 
     flex-shrink: 0;
     flex-grow: 1;
@@ -596,12 +599,35 @@ textarea {
         height: 128px;
       }
 
+      /* separator between the categories */
+      &::before {
+        content: "";
+        display: block;
+        width: 100%;
+        height: 1px;
+        background-color: var(--secondary-color);
+      }
+
+      &::after {
+        content: "";
+        display: block;
+        width: 100%;
+        height: 1px;
+        background-color: var(--secondary-color);
+      }
+
+
       .tag-category-inner {
         display: grid;
+        grid-template-areas:
+          "category-name tags order-actions"
+          "emoji-icon tags order-actions"
+          "category-actions tags order-actions";
+
         grid-template-columns: 1fr 8fr 1fr;
         grid-template-rows: 1fr;
         padding: 0.5rem;
-        gap: 0.5rem;
+        gap: 0.125rem;
         height: 100%;
       }
 
@@ -611,15 +637,15 @@ textarea {
         height: 100%;
         text-align: center;
 
-        border-right: 1px solid rgba(255, 255, 255, 0.5);
-
         .tag-category-name {
+          grid-area: category-name;
           font-size: 0.8rem;
           margin: 0;
           padding: 0.25rem;
         }
 
         .emoji-icon-wrapper {
+          grid-area: emoji-icon;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -645,15 +671,16 @@ textarea {
         }
       }
 
-      .tag-category-tags {
+      .visual-tags {
+        grid-area: tags;
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
         padding: 0.5rem;
-        border-right: 1px solid rgba(255, 255, 255, 0.5);
       }
 
       .tag-category-order-actions {
+        grid-area: order-actions;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
@@ -679,6 +706,7 @@ textarea {
       }
 
       .tag-category-actions {
+        grid-area: category-actions;
         display: flex;
         flex-direction: row;
         justify-content: flex-start;
@@ -739,9 +767,10 @@ textarea {
     border: none;
     cursor: pointer;
     color: var(--text-color);
-    font-size: 1rem;
     text-shadow: 0 0 0.25rem var(--primary-color);
     user-select: none;
+
+    font-size: 12px;
 
     padding: 0.25rem;
     margin: 0;
@@ -1756,8 +1785,18 @@ select[disabled] {
 }
 
 .prompt-dialog {
+
+  @starting-style {
+    transform: translateY(-100%);
+  }
+
+  transform: translateY(0);
+
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition-behavior: allow-discrete;
   position: fixed;
-  display: flex;
+
+  display: inline-flex;
   flex-direction: column;
 
   width: 100%;
@@ -1766,9 +1805,14 @@ select[disabled] {
   padding: 0;
   margin: 0;
 
-  background-color: var(--primary-color);
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(0.25rem);
 
-  .top-bar {
+  z-index: 3;
+  place-self: center;
+  place-content: center;
+
+  .top-bar-transparent {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -1776,14 +1820,20 @@ select[disabled] {
     padding: 0.125rem;
     margin: 0;
 
-    background-color: var(--secondary-color);
+    place-self: flex-start;
+
+    width: 100%;
+
+    background-color: transparent;
+
+    border-bottom: 2px solid var(--dark-color-text);
 
     h4 {
       margin: 0;
-      padding: 0.125rem;
+      padding: 0;
     }
 
-    button {
+    .btn-close {
       background: none;
       border: none;
       cursor: pointer;
@@ -1791,13 +1841,297 @@ select[disabled] {
       font-size: 1rem;
       text-shadow: 0 0 0.25rem var(--primary-color);
       user-select: none;
-
       padding: 0.25rem;
-      margin: 0;
+      margin-left: auto;
 
       &:hover {
-        filter: invert(1);
+        filter: brightness(0.75);
       }
     }
   }
+
+  .prompt-inner {
+
+    z-index: 4;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    width: 80%;
+    aspect-ratio: 16/9;
+
+    place-self: center;
+
+    .prompt-message {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      flex-grow: 1;
+      padding: 0.5rem;
+      margin: 0;
+
+      p {
+        margin: 0;
+        padding: 0.25rem;
+        font-style: italic;
+      }
+
+    }
+
+    .prompt-actions {
+      display: flex;
+      flex-direction: row;
+      place-content: center;
+      justify-content: space-around;
+      gap: 0;
+
+      width: calc(calc(100% / 3) * 2);
+
+      button {
+
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-color);
+        font-size: 1rem;
+        text-shadow: 0 0 0.25rem var(--primary-color);
+        user-select: none;
+
+
+        padding: 0.25rem;
+        margin: 0;
+
+        &:hover {
+          filter: brightness(0.75);
+        }
+
+        border-bottom: 2px solid var(--text-color);
+      }
+    }
+  }
+}
+
+#preferences {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+
+  width: 100%;
+  height: 100%;
+  gap: 0.25rem;
+
+  padding: 0rem;
+
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+
+
+
+  /* a group of key-value pair inputs that get translated into a JSON object */
+  .pref-group {
+    /* items wrap to the next row when they reach the end of the container */
+    display: inline-flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: flex-start;
+
+    gap: 0.25rem;
+    padding: 0.25rem;
+
+    .pref-group-title {
+      font-size: 1rem;
+      font-weight: 400;
+      margin: 0;
+      padding: 0.25rem;
+
+      border-bottom: 2px solid var(--primary-color);
+    }
+
+    .pref-group-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr;
+      gap: 0.25rem;
+      padding: 0.25rem;
+      margin: 0;
+      width: 100%;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+
+      label.pref-group-item-key {
+        font-size: 0.75rem;
+        font-weight: 400;
+        margin: 0;
+        padding: 0.25rem;
+        text-align: left;
+        width: 100%;
+      }
+
+      input.pref-group-item-value:not(.wrappable-text-input) {
+        background-color: var(--secondary-color);
+        color: var(--text-color);
+        border: none;
+        padding: 0.5rem;
+        margin: 0;
+        font-size: 1rem;
+        text-shadow: 0 0 0.25rem var(--primary-color);
+        user-select: text;
+
+        border-bottom: 2px solid var(--primary-color);
+        border-bottom-style: ridge;
+
+        &::placeholder {
+          color: var(--text-color);
+          text-shadow: 0 0 0.25rem var(--primary-color);
+        }
+
+        &:not(:focus)::placeholder {
+          opacity: 0.5;
+          color: var(--text-color), 0.5;
+          text-shadow: 0 0 0.25rem var(--primary-color);
+
+          outline: none;
+        }
+
+        &:hover {
+          background-color: var(--secondary-color);
+          color: var(--text-color);
+        }
+
+        &:focus {
+          background-color: var(--tertiary-color);
+          color: var(--text-color);
+          /* stroke around the text for extra visibility */
+          paint-order: stroke fill;
+          -webkit-text-stroke: 0.2em var(--primary-color);
+        }
+
+        &::placeholder {
+          color: var(--dark-color-text);
+          text-shadow: 0 0 0.25rem var(--primary-color);
+        }
+
+        &:not(:focus)::placeholder {
+          opacity: 0.5;
+          color: var(--dark-color-text), 0.5;
+          text-shadow: 0 0 0.25rem var(--primary-color);
+        }
+      }
+
+      .pref-group-item-value.wrappable-text-input {
+        text-wrap: wrap;
+        display: inline-block;
+        /* To imply that there is a field, and it is editable */
+        border-bottom: 2px dotted var(--secondary-color);
+        min-width: 48px;
+        width: 100%;
+        content: "value";
+
+        padding: 0.125rem;
+        margin: 0;
+
+        &::placeholder {
+          color: var(--dark-color-text);
+          text-shadow: 0 0 0.25rem var(--primary-color);
+          cursor: text;
+          content: "value";
+        }
+
+        font-size: inherit;
+        line-height: inherit;
+
+        &:not([font]) {
+          font-family: "IBM Plex Mono", monospace;
+        }
+
+        &[font="sans-serif"] {
+          font-family: "Raleway", sans-serif;
+        }
+
+        &[font="monospace"] {
+          font-family: "IBM Plex Mono", monospace;
+        }
+
+        &:hover {
+          background-color: var(--secondary-color);
+          color: var(--text-color);
+        }
+
+        &:focus {
+          background-color: var(--tertiary-color);
+          color: var(--text-color);
+          /* stroke around the text for extra visibility */
+          paint-order: stroke fill;
+          -webkit-text-stroke: 0.2em var(--primary-color);
+          outline: none;
+        }
+
+        &::placeholder {
+          color: var(--dark-color-text);
+          text-shadow: 0 0 0.25rem var(--primary-color);
+        }
+
+        &:not(:focus)::placeholder {
+          opacity: 0.5;
+          color: var(--dark-color-text), 0.5;
+          text-shadow: 0 0 0.25rem var(--primary-color);
+        }
+      }
+    }
+  }
+}
+
+/* some elements have content that i haven't implemented yet :( */
+.coming-soon {
+
+  display: flex;
+  flex-direction: column;
+  /* span the entire parent container */
+  width: 100%;
+  height: 100%;
+  
+
+  z-index: 2;
+
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(0.25rem);
+
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+
+  &::before {
+    position: relative;
+
+    content: "Coming soon (sorry!)";
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--text-color);
+    text-shadow: 0 0 0.25rem var(--primary-color);
+    user-select: none;
+    text-align: center;
+    padding: 0.5rem;
+    margin: 0;
+
+    place-self: center;
+    text-align: center;
+
+    vertical-align: middle;
+
+    z-index: 3;
+  }
+}
+
+*& > .coming-soon {
+  position: relative;
 }
