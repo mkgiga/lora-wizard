@@ -135,7 +135,7 @@ function getTags({
   if (url.match(/danbooru\.donmai\.us\/posts\/\d+/)) {
     return danbooru({ options, imageSrc, pageUrl: url });
   } else if (url.includes("e621")) {
-    return e621({ options, imageSrc, pageUrl: url });
+    return danbooru({ options, imageSrc, pageUrl: url });
   }
 
   return {};

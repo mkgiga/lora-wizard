@@ -45,10 +45,10 @@ function main() {
    * Horizontal, wrapping flex container for image entries
    * @type {HTMLDivElement}
    */
-  const entryList = document.querySelector(".image-entries");
+  const entryList = document.querySelector("#image-entries");
 
   chrome.contextMenus.onClicked.addListener((info, tab) => {
-    
+
     if (info.menuItemId === "addImage") {
       addImageEntries(entryList, false, { src: info.srcUrl, pageUrl: tab.url });
     }
@@ -69,6 +69,43 @@ function main() {
         );
       });
     }
+  });
+
+  
+
+  document.querySelector("#btn-restore-all-recycled").addEventListener("click", () => {
+    const entries = document.querySelectorAll("#recycle-bin-entries .image-entry");
+
+    entries.forEach((entry) => {
+      console.log("Restoring entry: ", entry);
+      const cloned = entry.cloneNode(true);
+      entry.remove();
+
+      const src = cloned.querySelector("img").src;
+      const tags = cloned.querySelector("textarea").value.split(", ");
+
+      const newEntry = createImageEntry({ src, tags, target: entryList });
+
+      entryList.appendChild(newEntry);
+    });
+
+    save();
+  });
+
+  document.querySelector("#btn-clear-recycle-bin").addEventListener("click", () => {
+    console.log("Clearing recycle bin...");
+    const entries = document.querySelectorAll("#recycle-bin-entries .image-entry");
+
+    entries.forEach((entry) => {
+      console.log("Removing entry: ", entry);
+      entry.remove();
+    });
+
+    save();
+  });
+
+  document.querySelector(".handle-button").addEventListener("click", () => {
+    document.querySelector("#recycle-bin").toggleAttribute("active");
   });
 
   document.querySelector(".btn-save").addEventListener("click", save);
@@ -95,23 +132,46 @@ function main() {
     .addEventListener("click", () => {
       const date = new Date().toLocaleString();
 
-      const allEntries = document.querySelectorAll(".image-entry");
-
-      const entries = [];
+      const allEntries = document.querySelectorAll("#image-entries .image-entry"); // get all entries from the main list
+      const images = [];
+      const allCategories = document.querySelectorAll(".tag-category");
+      const categories = [];
+      const backup = {};
 
       allEntries.forEach((entry) => {
-        const img = entry.querySelector("img");
-        const tags = entry.querySelector("textarea").value.split(", ");
-        entries.push({ src: img.src, tags });
+        const img = entry.querySelector("img").src;
+        const tags = entry.querySelector("textarea").value.split(", ").map((tag) => tag.trim()).filter((tag) => tag !== "");
+        const pageUrl = entry.querySelector("[page-url]").getAttribute("page-url");
+
+        images.push({ src: img, tags, pageUrl });
       });
 
-      backups[date] = entries;
+      allCategories.forEach((category) => {
+        const name = category.querySelector(".tag-category-name").textContent;
+        const tags = category.querySelectorAll(".visual-tag-wrapper .visual-tag").entries().map(([i, tag]) => tag.textContent.trim()).filter((tag) => tag !== "");
+        const emoji = category.querySelector(".emoji-icon").textContent;
+        
+        categories.push({ name, tags, emoji });
+      });
+
+      backup.images = images;
+      backup.categories = categories;
+
+      backups[date] = backup;
 
       const select = document.querySelector("#sel-backups");
       const option = document.createElement("option");
-      option.textContent = date;
+
       option.value = date;
+      option.textContent = date;
+      option.selected = true;
+      
+      // associate the backup object with the option element
+      option.backup = backup;
+
       select.appendChild(option);
+
+      save();
     });
 
   document
@@ -624,130 +684,8 @@ function addTagsToContainer(containerElement, ...tags) {
 function createTagCategory({ name = "Category", tags = [], emoji = "" }) {
   const el = html`
     <div class="tag-category" name="${name}">
-      <style>
-        @scope (.tag-category) {
-          :scope {
-            * {
-              padding: 0;
-              margin: 0;
-              box-sizing: border-box;
-            }
-
-            & {
-              display: flex;
-              flex-direction: column;
-              padding: 0;
-              margin: 0;
-              height: 128px;
-            }
-
-            .tag-category-inner {
-              display: grid;
-              grid-template-columns: 1fr 8fr 1fr;
-              grid-template-rows: 1fr;
-              padding: 0.5rem;
-              gap: 0.5rem;
-              height: 100%;
-            }
-
-            .tag-category-header {
-              display: flex;
-              flex-direction: column;
-              height: 100%;
-              text-align: center;
-
-              border-right: 1px solid rgba(255, 255, 255, 0.5);
-
-              .tag-category-name {
-                font-size: 0.8rem;
-                margin: 0;
-                padding: 0.25rem;
-              }
-
-              .emoji-icon-wrapper {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                flex-grow: 1;
-
-                .emoji-icon {
-                  font-size: 1.5rem;
-                  border: none;
-                  background: none;
-                  cursor: pointer;
-                  width: 100%;
-                  height: 100%;
-
-                  &:hover {
-                    filter: invert(1);
-                  }
-
-                  &:active {
-                    filter: scale(0.9);
-                    filter: invert(1);
-                  }
-                }
-              }
-            }
-
-            .tag-category-tags {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 0.5rem;
-              padding: 0.5rem;
-              border-right: 1px solid rgba(255, 255, 255, 0.5);
-            }
-
-            .tag-category-order-actions {
-              display: flex;
-              flex-direction: column;
-              gap: 0.5rem;
-              justify-content: center;
-              align-items: center;
-              padding: 0.5rem;
-
-              .material-icons {
-                font-size: 1.5rem;
-                border: none;
-                background: none;
-                cursor: pointer;
-
-                &:hover {
-                  filter: invert(1);
-                }
-
-                &:active {
-                  filter: scale(0.9);
-                  filter: invert(1);
-                }
-              }
-            }
-
-            .tag-category-actions {
-              display: flex;
-              flex-direction: row;
-              justify-content: flex-start;
-              align-items: center;
-
-              button {
-                border: none;
-                background: none;
-                cursor: pointer;
-                font-size: 1.5rem;
-
-                &:hover {
-                  filter: invert(1);
-                }
-
-                &:active {
-                  filter: scale(0.9);
-                  filter: invert(1);
-                }
-              }
-            }
-          }
-        }
-      </style>
+      
+      
       <div class="tag-category-inner">
         <div class="tag-category-header">
           <h4 class="tag-category-name" contenteditable>${name}</h4>
@@ -1391,9 +1329,20 @@ function createImageEntry({
       }
     }
   };
+  
   el.querySelector(".btn-remove-entry").addEventListener("click", () => {
-    el.remove();
-    save();
+
+    const recycleBin = document.getElementById("recycle-bin");
+
+    // <ul id="recycle-bin-entries"></ul>
+    const recycleBinEntries = document.getElementById("recycle-bin-entries");
+    if (!recycleBin) {
+      console.error("Recycle bin not found");
+      return;
+    } else {
+      recycleBinEntries.appendChild(el);
+      save();
+    }
   });
 
   save();
@@ -1436,8 +1385,44 @@ function save() {
     categories.push({ name, tags: tagsArray, emoji });
   });
 
-  chrome.storage.local.set({ images, categories, backups }, () => {
-    console.log("Saved: ", { images, categories, backups });
+  let savedBackups = {};
+
+  for (const date of Object.keys(backups)) {
+    const backup = backups[date];
+    const images = backup.images || [];
+    const categories = backup.categories || [];
+    
+    const _images = [];
+    const _categories = [];
+
+    for (const _image of Object.values(images)) {
+      const image = {
+        src: _image.src,
+        pageUrl: _image.pageUrl,
+        tags: _image.tags,
+      };
+
+      _images.push(image);
+    }
+
+    for (const _category of Object.values(categories)) {
+
+      const category = {
+        name: _category.name,
+        tags: _category.tags,
+        emoji: _category.emoji,
+      };
+
+      _categories.push(category);
+    }
+
+    savedBackups[date] = { images: _images, categories: _categories };
+
+    console.log("Saved backup: ", savedBackups, "...");
+  }
+
+  chrome.storage.local.set({ images, categories, backups: savedBackups }, () => {
+    console.log("Saved: ", { images, categories, backups: savedBackups });
   });
 }
 
@@ -1445,6 +1430,8 @@ function load() {
   let exit = false;
 
   chrome.storage.local.get("backups", (data) => {
+
+    // if no backups object exists, create it
     if (!data.backups) {
       chrome.storage.local.set({ backups: {} }, () => {
         chrome.storage.local.get("backups", (data) => {
@@ -1452,7 +1439,22 @@ function load() {
         });
       });
     } else {
+      console.log("Backups found: ", data.backups);
+      
+      // load the backups
       backups = data.backups;
+      
+      const select = document.querySelector("#sel-backups");
+
+      for (const date of Object.keys(backups)) {
+        const backup = backups[date];
+        
+        const option = document.createElement("option");
+        option.value = date;
+        option.textContent = date;
+
+        select.appendChild(option);
+      }
     }
   });
 
@@ -1643,6 +1645,59 @@ async function getTagsFromPage(src = "") {
   const parser = new DOMParser();
 
   return tags;
+}
+
+function promptDialog({
+  title = "Warning",
+  message = "Are you sure?",
+  options = [
+    { text: "Yes", onclick: (e) => { prompt.close(); } },
+    { text: "No", onclick: (e) => { prompt.close(); } },
+  ],
+  defaultOption = "Yes",
+}) {
+  const prompt = html`
+    <div class="prompt-dialog">
+      <div class="prompt-inner">
+        <div class="top-bar">
+          <h3>${title}</h3>
+          <button class="btn-close material-icons">close</button>
+        </div>
+        <div class="prompt-actions">
+          ${options.map(
+            (option) => html`
+              <button>${option.text}</button>
+            `
+          )}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const buttons = prompt.querySelectorAll("button");
+
+  for (const btn of buttons) {
+    if (btn.classList.contains("btn-close")) {
+      btn.addEventListener("click", () => {
+        prompt.remove();
+      });
+    } else {
+      btn.addEventListener("click", (e) => {
+        const text = e.target.textContent;
+        const option = options.find((opt) => opt.text === text);
+
+        if (!option) {
+          throw new Error("Option not found: ", text);
+        }
+
+        option.onclick.call({ prompt });
+      });
+    }
+  }
+
+  document.body.appendChild(prompt);
+
+  return prompt;
 }
 
 document.addEventListener("DOMContentLoaded", main);

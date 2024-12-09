@@ -36,10 +36,12 @@ body {
     "header"
     "top-menu"
     "image-entries"
+    "project-stats"
+    "hr"
     "bottom-panel";
 
   grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr 10fr 8fr;
+  grid-template-rows: auto 1fr 10fr auto auto 8fr;
 
   margin: 0;
   padding: 0;
@@ -69,6 +71,44 @@ body {
     user-select: text;
   }
 
+  #project-stats {
+    display: flex;
+    flex-direction: row;
+    place-content: center;
+    font-size: 12px;
+
+    text-align: left;
+    text-wrap: nowrap;
+    vertical-align: middle;
+
+    justify-self: right;
+    padding-right: 0.5rem;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 0;
+    line-height: 1;
+
+    flex-shrink: 0;
+
+    user-select: none;
+    gap: 0;
+
+    &:nth-child(2) {
+      margin-right: 0.5rem;
+    }
+
+    .material-icons {
+      font-size: 12px;
+      align-self: center;
+    }
+
+    p {
+      margin: 0;
+      padding: 0.25rem;
+    }
+
+  }
+
   &>header {
 
     user-select: none;
@@ -92,34 +132,7 @@ body {
       flex-shrink: 0;
     }
 
-    #project-stats {
-      display: grid;
-      grid-template-columns: 12px 1fr auto;
-      grid-template-rows: 1fr 1fr 1fr;
 
-      font-size: 12px;
-
-      text-align: left;
-      text-wrap: nowrap;
-
-      justify-self: center;
-      margin-left: auto;
-      margin-right: auto;
-      flex-shrink: 0;
-
-      gap: 0;
-
-      .material-icons {
-        font-size: 12px;
-        align-self: center;
-      }
-
-      p {
-        margin: 0;
-        padding: 0.25rem;
-      }
-
-    }
 
     svg {
       width: 48px;
@@ -498,6 +511,10 @@ textarea {
   align-items: flex-start;
   justify-content: flex-start;
 
+  /* don't vertically space the tags to fill the container, just use the minimum space required */
+  align-content: flex-start;
+
+
   .visual-tag-wrapper {
     display: flex;
     align-items: center;
@@ -510,8 +527,6 @@ textarea {
     font-family: "Raletway", sans-serif;
     font-weight: 700;
 
-
-
     p {
       margin: 0;
     }
@@ -523,6 +538,10 @@ textarea {
   display: flex;
   flex-direction: column;
 
+  overflow: hidden;
+
+  flex-shrink: 0;
+
   .tab-child {
     padding: 0;
     margin: 0;
@@ -533,19 +552,169 @@ textarea {
 }
 
 .categories-container {
-  .saved-tags {}
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-start;
+  justify-content: flex-start;
+
+  height: 100%;
+  width: 100%;
 
   .tag-categories {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
+
+    /* don't space the tags vertically to fill the container, just use the minimum space required */
+    align-content: flex-start;
 
     width: 100%;
+    row-gap: 0.5rem;
+    column-gap: 0;
+
+    overflow: auto;
+
+    flex-shrink: 0;
+    flex-grow: 1;
+
+    /* overflow should be scrollable */
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--secondary-color);
+    scrollbar-track-color: var(--secondary-color);
+    scrollbar-face-color: var(--primary-color);
+
+    .tag-category {
+
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-grow: 1;
+
+      & {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        margin: 0;
+        height: 128px;
+      }
+
+      .tag-category-inner {
+        display: grid;
+        grid-template-columns: 1fr 8fr 1fr;
+        grid-template-rows: 1fr;
+        padding: 0.5rem;
+        gap: 0.5rem;
+        height: 100%;
+      }
+
+      .tag-category-header {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        text-align: center;
+
+        border-right: 1px solid rgba(255, 255, 255, 0.5);
+
+        .tag-category-name {
+          font-size: 0.8rem;
+          margin: 0;
+          padding: 0.25rem;
+        }
+
+        .emoji-icon-wrapper {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex-grow: 1;
+
+          .emoji-icon {
+            font-size: 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+
+            &:hover {
+              filter: invert(1);
+            }
+
+            &:active {
+              filter: scale(0.9);
+              filter: invert(1);
+            }
+          }
+        }
+      }
+
+      .tag-category-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border-right: 1px solid rgba(255, 255, 255, 0.5);
+      }
+
+      .tag-category-order-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        justify-content: center;
+        align-items: center;
+        padding: 0.5rem;
+
+        .material-icons {
+          font-size: 1.5rem;
+          border: none;
+          background: none;
+          cursor: pointer;
+
+          &:hover {
+            filter: invert(1);
+          }
+
+          &:active {
+            filter: scale(0.9);
+            filter: invert(1);
+          }
+        }
+      }
+
+      .tag-category-actions {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+
+        button {
+          border: none;
+          background: none;
+          cursor: pointer;
+          font-size: 1.5rem;
+
+          &:hover {
+            filter: invert(1);
+          }
+
+          &:active {
+            filter: scale(0.9);
+            filter: invert(1);
+          }
+        }
+      }
+
+    }
+  }
+
+  /* the direct host of the .tag-categories, which needs to be scrollable,
+    therefore this container shouldn't be scrollable, but the .tag-categories should */
+  #saved-tags {
+    display: flex;
+    flex-direction: column;
     gap: 0.5rem;
 
-    .tag-category {}
+    overflow: hidden;
   }
+
+  overflow: hidden;
 }
 
 .top-bar {
@@ -555,6 +724,8 @@ textarea {
   justify-content: flex-start;
   padding: 0.125rem;
   margin: 0;
+
+  user-select: none;
 
   background-color: var(--secondary-color);
 
@@ -1090,8 +1261,9 @@ button.tab {
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
+  gap: 0.25rem;
 
-  button {
+  button.btn-backup {
     display: flex;
     flex-direction: row;
     gap: 0.25rem;
@@ -1104,7 +1276,8 @@ button.tab {
     text-shadow: 0 0 0.25rem var(--primary-color);
     user-select: none;
     padding: 0;
-    margin: 0;
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
     border: none;
     cursor: pointer;
 
@@ -1152,6 +1325,10 @@ button.tab {
       color: var(--text-color) !important;
     }
   }
+}
+
+#bottom-bar-separator {
+  grid-area: hr;
 }
 
 .menu-separator {
@@ -1208,6 +1385,13 @@ select {
     color: var(--dark-color-text), 0.5;
     text-shadow: 0 0 0.25rem var(--primary-color);
   }
+}
+
+hr.separator {
+  border: none;
+  border-top: 1px solid var(--secondary-color);
+  margin: 0.25rem;
+  padding: 0;
 }
 
 hr.command-separator {
@@ -1278,4 +1462,342 @@ select[disabled] {
   }
 
   pointer-events: none;
+}
+
+#recycle-bin {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+
+  padding: 0;
+  margin: 0;
+
+  /* hide the container by sliding it off-screen to the right */
+  left: 100%;
+  top: 0;
+
+  z-index: 2;
+
+  background-color: var(--primary-color);
+
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  ul#recycle-bin-entries {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    margin: 0;
+    overflow-y: auto;
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--secondary-color);
+    scrollbar-track-color: var(--secondary-color);
+    scrollbar-face-color: var(--primary-color);
+
+    .deleted-image-entry {
+      display: grid;
+      grid-template-columns: 1fr 6fr 1fr;
+      grid-template-rows: 1fr;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: flex-start;
+      width: 100%;
+      height: 96px;
+      flex-shrink: 0;
+
+      overflow: hidden;
+
+      img {
+        object-fit: cover;
+        min-width: 96px;
+        width: 96px;
+        height: 96px;
+
+        &:hover {
+          filter: brightness(0.75);
+          cursor: pointer;
+        }
+      }
+
+      textarea {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background-color: var(--dark-color);
+        color: var(--text-color);
+        border: none;
+        padding: 0.5rem;
+        font-size: 10px;
+        text-shadow: 0 0 0.25rem var(--primary-color);
+        user-select: text;
+        resize: none;
+
+        font-family: "IBM Plex Mono", monospace;
+
+        &:focus {
+          outline: none;
+        }
+
+        &::placeholder {
+          color: var(--dark-color-text);
+          text-shadow: 0 0 0.25rem var(--primary-color);
+        }
+
+        &:not(:focus)::placeholder {
+          opacity: 0.5;
+          color: var(--dark-color-text), 0.5;
+          text-shadow: 0 0 0.25rem var(--primary-color);
+        }
+
+        &:hover {
+          background-color: var(--secondary-color);
+          color: var(--text-color);
+        }
+
+        &:focus {
+          background-color: var(--tertiary-color);
+          color: var(--text-color);
+          /* stroke around the text for extra visibility */
+          paint-order: stroke fill;
+          -webkit-text-stroke: 0.2em var(--primary-color);
+
+          outline: none;
+
+          &::placeholder {
+            opacity: 0.5;
+            color: var(--dark-color-text), 0.5;
+            text-shadow: 0 0 0.25rem var(--primary-color);
+          }
+
+          &:not(:focus)::placeholder {
+            opacity: 0.5;
+            color: var(--dark-color-text), 0.5;
+            text-shadow: 0 0 0.25rem var(--primary-color);
+          }
+
+          &:hover {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+          }
+
+          &:focus {
+            background-color: var(--tertiary-color);
+            color: var(--text-color);
+            /* stroke around the text for extra visibility */
+            paint-order: stroke fill;
+            -webkit-text-stroke: 0.2em var(--primary-color);
+          }
+
+        }
+      }
+    }
+  }
+
+  .top-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0.125rem;
+    margin: 0;
+
+    background-color: var(--secondary-color);
+
+    font-size: 0.75rem;
+    font-weight: 400;
+
+    h4 {
+      margin: 0;
+      padding: 0.125rem;
+    }
+
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+      font-size: 1rem;
+      text-shadow: 0 0 0.25rem var(--primary-color);
+      user-select: none;
+
+      padding: 0.25rem;
+      margin: 0;
+
+      &:hover {
+        filter: invert(1);
+      }
+    }
+  }
+
+  .handle {
+    position: fixed;
+    width: 24px;
+    font-size: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    vertical-align: middle;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+
+    pointer-events: none;
+
+    /* but the handle should be visible by poking out from the right */
+    transform: translateX(-24px) translateY(0);
+
+    .handle-button {
+      display: flex;
+      flex-direction: column;
+      background-color: var(--secondary-color);
+      color: var(--text-color);
+      justify-self: center;
+      align-items: center;
+      height: 64px;
+      width: 24px;
+      text-align: center;
+      justify-content: center;
+      font-size: 1rem;
+      z-index: 3;
+
+      pointer-events: all;
+
+      box-shadow: 0 0 0.25rem var(--primary-color);
+
+      cursor: pointer;
+
+      border-top-left-radius: 16px;
+      border-bottom-left-radius: 16px;
+
+      &::before {
+        content: "chevron_left";
+      }
+
+      &:hover {
+        background-color: var(--tertiary-color);
+        color: var(--text-color);
+      }
+
+      &:focus {
+        background-color: var(--tertiary-color);
+        color: var(--text-color);
+        /* stroke around the text for extra visibility */
+        paint-order: stroke fill;
+        -webkit-text-stroke: 0.2em var(--primary-color);
+      }
+    }
+  }
+
+  .backdrop {
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    width: 0;
+    height: 100%;
+    z-index: -1;
+
+    background-color: rgba(0, 0, 0, 0);
+
+    position: fixed;
+    top: 0;
+    left: 100%;
+  }
+
+  &[active] {
+    /* slide the container back into view */
+    left: calc(100%/3);
+
+    .handle-button::before {
+      content: "chevron_right";
+    }
+
+    .backdrop {
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+
+      top: 0;
+      left: 0;
+
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+  }
+}
+
+/* Any element with a tooltip attribute will have a tooltip ::before it */
+[tooltip] {
+  &:not(:hover) {
+    &::before {
+      display: none;
+    }
+  }
+
+  &:hover {
+    &::before {
+      display: block;
+      content: attr(tooltip);
+      position: absolute;
+      background-color: var(--secondary-color);
+      color: var(--text-color);
+      font-size: 0.5rem;
+      font-weight: 400;
+      padding: 0.125rem;
+      margin: 0;
+      border: 1px solid var(--primary-color);
+      z-index: 5;
+
+      /* position the tooltip above the element */
+      position: absolute;
+      top: minmax(0, -1rem);
+    }
+  }
+}
+
+.prompt-dialog {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  height: 100%;
+
+  padding: 0;
+  margin: 0;
+
+  background-color: var(--primary-color);
+
+  .top-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0.125rem;
+    margin: 0;
+
+    background-color: var(--secondary-color);
+
+    h4 {
+      margin: 0;
+      padding: 0.125rem;
+    }
+
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+      font-size: 1rem;
+      text-shadow: 0 0 0.25rem var(--primary-color);
+      user-select: none;
+
+      padding: 0.25rem;
+      margin: 0;
+
+      &:hover {
+        filter: invert(1);
+      }
+    }
+  }
 }
