@@ -1,5 +1,4 @@
-import { html } from "../lib/html.js";
-import contextMenu from "./context-menu.js";
+import { html } from "./lib/html.js";
 
 const windowEventListeners = {
   imagesEntry: {
@@ -49,8 +48,26 @@ function main() {
   const entryList = document.querySelector(".image-entries");
 
   chrome.contextMenus.onClicked.addListener((info, tab) => {
+    
     if (info.menuItemId === "addImage") {
       addImageEntries(entryList, false, { src: info.srcUrl, pageUrl: tab.url });
+    }
+
+    if (info.menuItemId === "addBooruImage") {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const activeTab = tabs[0];
+        const imageSrc = info.srcUrl;
+        console.log("Active tab for message:", activeTab);
+
+        chrome.tabs.sendMessage(
+          activeTab.id,
+          { message: "getTags", imageSrc },
+          (response) => {
+            console.log("Response from content script:", response);
+            onImportedTags(response);
+          }
+        );
+      });
     }
   });
 
@@ -63,6 +80,13 @@ function main() {
   document.querySelector(".btn-export").addEventListener("click", () => {
     download("exported");
   });
+
+  /** @type {HTMLParagraphElement} */
+  const projectStatsTags = document.querySelector("#project-stats-tags");
+  const projectStatsEntries = document.querySelector("#project-stats-entries");
+  const projectStatsImgAvg = document.querySelector(
+    "#project-stats-tags-per-image"
+  );
 
   document.querySelector("#txt-search").addEventListener("input", onSearch);
 
@@ -240,6 +264,33 @@ function main() {
     syncImageAttributes();
     syncTagColors();
   }, 1000 / 60);
+
+  // brute force update because i cba to do it properly
+  const updateStatsFirstTime = () => {
+    setTimeout(() => {
+      updateStats();
+
+      const projectStatsTags = document.querySelector("#project-stats-tags");
+      const projectStatsEntries = document.querySelector(
+        "#project-stats-entries"
+      );
+      const projectStatsImgAvg = document.querySelector(
+        "#project-stats-tags-per-image"
+      );
+
+      if (
+        projectStatsTags.textContent === "NaN" ||
+        projectStatsEntries.textContent === "NaN" ||
+        projectStatsImgAvg.textContent === "NaN"
+      ) {
+        updateStatsFirstTime();
+      } else {
+        console.log("Project stat counters initialized");
+      }
+    }, 10); // wait for the images to load
+  };
+
+  updateStatsFirstTime();
 }
 
 ///////////////////// COMMAND QUERIES //////////////////////
@@ -842,6 +893,95 @@ function randomEmoji() {
   return String.fromCodePoint(randomCodePoint);
 }
 
+function updateStats() {
+  const projectStatsTags = document.querySelector("#project-stats-tags");
+  const projectStatsEntries = document.querySelector("#project-stats-entries");
+  const projectStatsImgAvg = document.querySelector(
+    "#project-stats-tags-per-image"
+  );
+
+  const entries = document.querySelectorAll(".image-entry");
+  const textAreas = [];
+
+  entries.forEach((entry) => {
+    textAreas.push(entry.querySelector("textarea"));
+  });
+
+  const tags = textAreas
+    .map((ta) => ta.value.split(",").map((tag) => tag.trim()))
+    .filter((tag) => tag !== "")
+    .flat();
+  let uniqueTags = {};
+  let uniqueTagCount = 0;
+  for (const tag of tags) {
+    if (tag === "") {
+      continue;
+    }
+    if (!uniqueTags[tag]) {
+      uniqueTags[tag] = true;
+      uniqueTagCount++;
+    }
+  }
+
+  function getImageEntryCountColor(count) {
+    // 0 black
+    // 5 red
+    // 10 yellow
+    // 20 green
+    // 40 lime
+
+    // interpolate between the colors
+    // every new color is double the previous one
+    const gradient = [0x000000, 0xff0000, 0xffff66, 0x009933, 0x00ff00];
+
+    function hexToRgb(hex) {
+      return {
+        r: (hex >> 16) & 0xff,
+        g: (hex >> 8) & 0xff,
+        b: hex & 0xff,
+      };
+    }
+
+    function rgbToHex({ r, g, b }) {
+      return (r << 16) | (g << 8) | b;
+    }
+
+    function hexToCSSColor(hex) {
+      return `#${hex.toString(16).padStart(6, "0")}`;
+    }
+
+    // interpolate between the colors
+    // every new color is double the previous one
+    const steps = gradient.length - 1;
+    const step = Math.floor(count / steps);
+    const remainder = count % steps;
+
+    const startColor = hexToRgb(gradient[step]);
+    const endColor = hexToRgb(gradient[step + 1]);
+
+    const r = Math.floor(
+      startColor.r + (endColor.r - startColor.r) * (remainder / steps)
+    );
+
+    const g = Math.floor(
+      startColor.g + (endColor.g - startColor.g) * (remainder / steps)
+    );
+
+    const b = Math.floor(
+      startColor.b + (endColor.b - startColor.b) * (remainder / steps)
+    );
+
+    return hexToCSSColor(rgbToHex({ r, g, b }));
+  }
+
+  projectStatsTags.textContent = `${uniqueTagCount}`;
+  projectStatsEntries.textContent = `${entries.length}`;
+  projectStatsEntries.style.color = getImageEntryCountColor(entries.length);
+  projectStatsImgAvg.textContent = `${(tags.length / entries.length).toFixed(
+    2
+  )}`;
+}
+
 function addImageEntries(
   targetList = document.querySelector(".image-entries"),
   calledByLoad = false,
@@ -884,25 +1024,59 @@ function addImageEntries(
   return targetList;
 }
 
-function compareBooruTagsToTags(imageEntry) {
-  // get the url of the tab that we're currently on so we can scrape the tags
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const tab = tabs[0];
+function onImportedTags({
+  tags = {
+    general: [],
+    artist: [],
+    species: [],
+    character: [],
+    meta: [],
+    copyright: [],
+  },
+  options,
+  imageSrc,
+  pageUrl,
+}) {
+  const entry = document.querySelector(`img[src="${imageSrc}"]`);
 
-    if (tab) {
-      const url = tab.url;
+  // flatten the tags
+  const flattened = [];
 
-      if (url.includes("e621")) {
-        // scrape tags from e621
-        const tags = getTagsFromPage(url);
-        imageEntry.addTags(tags);
-      } else if (url.includes("danbooru")) {
-        // scrape tags from danbooru
-        const tags = getTagsFromPage(url);
-        imageEntry.addTags(tags);
+  for (const key in tags) {
+    flattened.push(...tags[key]);
+  }
+
+  console.log("Adding tags for image: ", imageSrc, " with tags: ", flattened);
+
+  // doesn't exist, so let's add it
+  if (!entry) {
+    addImageEntries(
+      document.querySelector(".image-entries"),
+      false,
+      { src: imageSrc, tags: flattened, pageUrl }
+    );
+  } else {
+    // it exists, but we can still update the tags
+    let textarea = entry.querySelector("textarea");
+    if (!textarea) {
+      textarea = entry.parentElement.querySelector("textarea");
+      
+      if (!textarea) {
+        throw new Error("No textarea found");
       }
+
+      let existingTags = textarea.value.split(", ").map((tag) => tag.trim());
+      if (existingTags.length > 0) {
+        existingTags.slice(0, -1); // remove the trailing comma
+      }
+
+      const newTags = flattened.filter((tag) => !existingTags.includes(tag));
+
+      textarea.value += newTags.join(", ").replace(/, $/, "");
     }
-  });
+  }
+
+  save();
 }
 
 function removeImageEntries(
@@ -1098,7 +1272,7 @@ function createImageEntry({
 
     if (!calledByLoad) {
       const warning = el.querySelector(".image-entry-warning");
-      
+
       if (naturalWidth < 768 || naturalHeight < 768) {
         warning.removeAttribute("hidden");
       } else {
@@ -1112,6 +1286,8 @@ function createImageEntry({
     e.stopPropagation();
 
     const value = textArea.value;
+
+    updateStats();
 
     save();
   });

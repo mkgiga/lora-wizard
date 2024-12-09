@@ -71,6 +71,8 @@ body {
 
   &>header {
 
+    user-select: none;
+
     grid-area: header;
     display: flex;
     flex-direction: row;
@@ -88,6 +90,35 @@ body {
       text-align: center;
       justify-self: flex-start;
       flex-shrink: 0;
+    }
+
+    #project-stats {
+      display: grid;
+      grid-template-columns: 12px 1fr auto;
+      grid-template-rows: 1fr 1fr 1fr;
+
+      font-size: 12px;
+
+      text-align: left;
+      text-wrap: nowrap;
+
+      justify-self: center;
+      margin-left: auto;
+      margin-right: auto;
+      flex-shrink: 0;
+
+      gap: 0;
+
+      .material-icons {
+        font-size: 12px;
+        align-self: center;
+      }
+
+      p {
+        margin: 0;
+        padding: 0.25rem;
+      }
+
     }
 
     svg {
@@ -479,7 +510,7 @@ textarea {
     font-family: "Raletway", sans-serif;
     font-weight: 700;
 
-    
+
 
     p {
       margin: 0;
@@ -703,7 +734,7 @@ button.tab {
       .query-command {
 
         /* only show the title bar when displayed in the list of commands */
-        & > :not(.query-component-top-bar) {
+        &> :not(.query-component-top-bar) {
           display: none;
           width: 100%;
         }
@@ -713,7 +744,7 @@ button.tab {
           cursor: not-allowed;
         }
 
-        &:not([disabled]) > .query-component-top-bar {
+        &:not([disabled])>.query-component-top-bar {
           cursor: pointer;
 
           &:hover {
@@ -892,6 +923,7 @@ button.tab {
           .param {
             align-self: center;
             justify-self: flex-start;
+
             select {
               height: 18px;
               font-size: 10px;
@@ -1076,6 +1108,10 @@ button.tab {
     border: none;
     cursor: pointer;
 
+    p {
+      margin: 0;
+    }
+
     &:hover {
       background-color: var(--tertiary-color);
       color: var(--text-color);
@@ -1101,13 +1137,26 @@ button.tab {
     }
   }
 
-  select#sel-backups {}
+  #sel-backups {
+    min-width: 128px;
+    display: flex;
+    flex-direction: row;
+    position: relative;
+
+    &:not(:has(option)) {
+      position: relative;
+      cursor: not-allowed !important;
+      pointer-events: none;
+      opacity: 0.5 !important;
+      background-color: var(--secondary-color) !important;
+      color: var(--text-color) !important;
+    }
+  }
 }
 
 .menu-separator {
   flex: 1;
   width: 100%;
-
 }
 
 select {
@@ -1213,7 +1262,7 @@ input[type="checkbox"] {
     opacity: 0.5;
     color: var(--dark-color-text), 0.5;
     text-shadow: 0 0 0.25rem var(--primary-color);
-  } 
+  }
 }
 
 .top-bar {

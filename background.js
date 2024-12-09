@@ -50,9 +50,10 @@ function initCommands() {
 }
 
 function initContextMenu() {
+
   chrome.contextMenus.create({
     id: "addImage",
-    title: "Add image to side panel",
+    title: "Add image",
     contexts: ["image"],
     targetUrlPatterns: ["<all_urls>"],
     documentUrlPatterns: ["<all_urls>"],
@@ -61,10 +62,8 @@ function initContextMenu() {
 
   chrome.contextMenus.create({
     id: "addBooruImage",
-    title: "Add image + tags to side panel",
+    title: "Add image (autotag)",
     contexts: ["image"],
-
-    // anywhere on e621 or danbooru
     targetUrlPatterns: ["<all_urls>"],
     documentUrlPatterns: ["<all_urls>"],
     type: "normal",
