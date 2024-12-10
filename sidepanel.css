@@ -3,11 +3,11 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap");
 
 :root {
-  --primary-color: #333;
-  --secondary-color: #5a5a5a;
-  --tertiary-color: #271717;
-  --flair-color: #ffbb00;
-  --text-color: #fff;
+  --primary-color: #0B0F19;
+  --secondary-color: #1F2937;
+  --border-color: #374151;
+  --flair-color: #F26712;
+  --text-color: #f3f4f6;
   --selection-color: #007bff;
   --dark-color: #1d1d1d;
   --dark-color-text: #616161;
@@ -70,6 +70,38 @@ body {
   input {
     user-select: text;
   }
+  
+  #top-menu.top-bar {
+    display: flex;
+    flex-direction: row;
+
+    gap: 0;
+
+    h1, h2, h3, h4, h5, h6 {
+      margin: 0;
+      padding: 0.25rem;
+    }
+
+    text-align: center;
+    justify-content: center;
+    vertical-align: middle;
+    align-items: center;
+
+    input[type="search"], select, option {
+      font-size: 12px;
+      text-align: left;
+      text-wrap: nowrap;
+      vertical-align: middle;
+      padding: 0.25rem;
+    }
+
+    button {
+      p {
+        margin: 0;
+        padding: 0.25rem;  
+      }
+    }
+  }
 
   #project-stats {
     display: flex;
@@ -130,6 +162,14 @@ body {
       text-align: center;
       justify-self: flex-start;
       flex-shrink: 0;
+
+      text-shadow: 2px 2px 2px var(--flair-color);
+      font-size: 1.5rem;
+      font-weight: 400;
+      font-family: "IBM Plex Mono", monospace;
+      font-style: oblique;
+
+      color: var(--text-color);
     }
 
 
@@ -140,6 +180,7 @@ body {
       filter: drop-shadow(0 0 0.25rem black);
       justify-self: flex-start;
       flex-shrink: 0;
+      -webkit-filter: drop-shadow(0 0 0.25rem white);
     }
 
 
@@ -203,7 +244,7 @@ body {
         }
 
         &:focus {
-          background-color: var(--tertiary-color);
+          background-color: var(--border-color);
           color: var(--text-color);
           /* stroke around the text for extra visibility */
           paint-order: stroke fill;
@@ -250,7 +291,7 @@ button.material-icons {
   }
 
   &:focus {
-    background-color: var(--tertiary-color);
+    background-color: var(--border-color);
     color: var(--text-color);
     /* stroke around the text for extra visibility */
     paint-order: stroke fill;
@@ -268,9 +309,9 @@ textarea {
   display: block;
   width: 100%;
   height: 100%;
-  background-color: var(--dark-color);
+  background-color: var(--secondary-color);
   color: var(--text-color);
-  border: none;
+  border: 1px solid var(--border-color);
   padding: 0.5rem;
   font-size: 10px;
   text-shadow: 0 0 0.25rem var(--primary-color);
@@ -299,7 +340,7 @@ textarea {
   }
 
   &:focus {
-    background-color: var(--tertiary-color);
+    background-color: var(--border-color);
     color: var(--text-color);
     /* stroke around the text for extra visibility */
     paint-order: stroke fill;
@@ -348,9 +389,20 @@ textarea {
     height: 96px;
     flex-shrink: 0;
 
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) allow-discrete;
+    opacity: 1;
+
+    @starting-style {
+      transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) allow-discrete;
+      opacity: 0;
+      
+      transform: translateY(-200%);
+    }
+
     overflow: hidden;
 
     .image-entry-warning {
+
       &[hidden] {
         display: none;
       }
@@ -390,6 +442,7 @@ textarea {
       min-width: 96px;
       width: 96px;
       height: 96px;
+      border: 1px solid var(--border-color);
 
       &:hover {
         filter: brightness(0.75);
@@ -401,9 +454,9 @@ textarea {
       display: block;
       width: 100%;
       height: 100%;
-      background-color: var(--dark-color);
+      background-color: var(--secondary-color);
       color: var(--text-color);
-      border: none;
+      border: 1px solid var(--border-color);
       padding: 0.5rem;
       font-size: 10px;
       text-shadow: 0 0 0.25rem var(--primary-color);
@@ -433,7 +486,7 @@ textarea {
       }
 
       &:focus {
-        background-color: var(--tertiary-color);
+        background-color: var(--border-color);
         color: var(--text-color);
         /* stroke around the text for extra visibility */
         paint-order: stroke fill;
@@ -484,7 +537,9 @@ textarea {
 
 
   &[hidden] {
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) allow-discrete;
     display: none;
+    opacity: 0;
   }
 }
 
@@ -642,6 +697,17 @@ textarea {
           font-size: 0.8rem;
           margin: 0;
           padding: 0.25rem;
+          border-bottom: 1px dashed var(--border-color);
+
+          &:hover {
+            cursor: pointer;
+            
+            background-color: var(--secondary-color);
+          }
+
+          &:read-write::target-text {
+            background-color: var(--secondary-color);
+          }
         }
 
         .emoji-icon-wrapper {
@@ -658,6 +724,7 @@ textarea {
             cursor: pointer;
             width: 100%;
             height: 100%;
+            font-variant-emoji: text;
 
             &:hover {
               filter: invert(1);
@@ -859,11 +926,11 @@ input[type="search"] {
 button.tab {
   border: none;
 
-  background-color: var(--tertiary-color);
+  background-color: var(--border-color);
   color: var(--text-color);
   font-size: 0.75rem;
 
-  padding: 0.5rem;
+  padding: 0.25rem 0.5rem;
   margin: 0;
 
   text-shadow: 0 0 0.25rem var(--primary-color);
@@ -876,13 +943,11 @@ button.tab {
   &:not([active]) {
     background-color: var(--primary-color);
     color: var(--text-color);
-    box-shadow: 0 0 0.25rem var(--primary-color) inset;
   }
 
   &[active] {
     background-color: var(--secondary-color);
     color: var(--text-color);
-    box-shadow: 0 0 0.25rem var(--primary-color) inset;
   }
 
   /* 
@@ -953,7 +1018,7 @@ button.tab {
           }
 
           &:focus {
-            background-color: var(--tertiary-color);
+            background-color: var(--border-color);
             color: var(--text-color);
             /* stroke around the text for extra visibility */
             paint-order: stroke fill;
@@ -1007,7 +1072,7 @@ button.tab {
       }
 
       &:focus {
-        background-color: var(--tertiary-color);
+        background-color: var(--border-color);
         color: var(--text-color);
         /* stroke around the text for extra visibility */
         paint-order: stroke fill;
@@ -1071,7 +1136,7 @@ button.tab {
         }
 
         &:focus {
-          background-color: var(--tertiary-color);
+          background-color: var(--border-color);
           color: var(--text-color);
           /* stroke around the text for extra visibility */
           paint-order: stroke fill;
@@ -1263,7 +1328,7 @@ button.tab {
       }
 
       &:focus {
-        background-color: var(--tertiary-color);
+        background-color: var(--border-color);
         color: var(--text-color);
         /* stroke around the text for extra visibility */
         paint-order: stroke fill;
@@ -1290,7 +1355,7 @@ button.tab {
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 0.25rem;
+  gap: 0.125rem;
 
   button.btn-backup {
     display: flex;
@@ -1315,12 +1380,12 @@ button.tab {
     }
 
     &:hover {
-      background-color: var(--tertiary-color);
+      background-color: var(--border-color);
       color: var(--text-color);
     }
 
     &:focus {
-      background-color: var(--tertiary-color);
+      background-color: var(--border-color);
       color: var(--text-color);
       /* stroke around the text for extra visibility */
       paint-order: stroke fill;
@@ -1397,7 +1462,7 @@ select {
   }
 
   &:focus {
-    background-color: var(--tertiary-color);
+    background-color: var(--border-color);
     color: var(--text-color);
     /* stroke around the text for extra visibility */
     paint-order: stroke fill;
@@ -1418,14 +1483,14 @@ select {
 
 hr.separator {
   border: none;
-  border-top: 1px solid var(--secondary-color);
+  border-top: 1px solid var(--border-color);
   margin: 0.25rem;
   padding: 0;
 }
 
 hr.command-separator {
   border: none;
-  border-top: 1px solid var(--secondary-color);
+  border-top: 1px solid var(--border-color);
   margin: 0.25rem;
   padding: 0;
 }
@@ -1449,7 +1514,7 @@ input[type="checkbox"] {
   height: 12px;
 
   &:checked {
-    background-color: var(--tertiary-color);
+    background-color: var(--border-color);
     color: var(--text-color);
   }
 
@@ -1459,7 +1524,7 @@ input[type="checkbox"] {
   }
 
   &:focus {
-    background-color: var(--tertiary-color);
+    background-color: var(--border-color);
     color: var(--text-color);
     /* stroke around the text for extra visibility */
     paint-order: stroke fill;
@@ -1588,7 +1653,7 @@ select[disabled] {
         }
 
         &:focus {
-          background-color: var(--tertiary-color);
+          background-color: var(--border-color);
           color: var(--text-color);
           /* stroke around the text for extra visibility */
           paint-order: stroke fill;
@@ -1614,7 +1679,7 @@ select[disabled] {
           }
 
           &:focus {
-            background-color: var(--tertiary-color);
+            background-color: var(--border-color);
             color: var(--text-color);
             /* stroke around the text for extra visibility */
             paint-order: stroke fill;
@@ -1707,12 +1772,12 @@ select[disabled] {
       }
 
       &:hover {
-        background-color: var(--tertiary-color);
+        background-color: var(--border-color);
         color: var(--text-color);
       }
 
       &:focus {
-        background-color: var(--tertiary-color);
+        background-color: var(--border-color);
         color: var(--text-color);
         /* stroke around the text for extra visibility */
         paint-order: stroke fill;
@@ -2008,7 +2073,7 @@ select[disabled] {
         }
 
         &:focus {
-          background-color: var(--tertiary-color);
+          background-color: var(--border-color);
           color: var(--text-color);
           /* stroke around the text for extra visibility */
           paint-order: stroke fill;
@@ -2067,7 +2132,7 @@ select[disabled] {
         }
 
         &:focus {
-          background-color: var(--tertiary-color);
+          background-color: var(--border-color);
           color: var(--text-color);
           /* stroke around the text for extra visibility */
           paint-order: stroke fill;
@@ -2089,46 +2154,75 @@ select[disabled] {
     }
   }
 }
-
-/* some elements have content that i haven't implemented yet :( */
 .coming-soon {
 
   display: flex;
   flex-direction: column;
-  /* span the entire parent container */
   width: 100%;
   height: 100%;
   
-
   z-index: 2;
-
   background-color: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(0.25rem);
-
+  
   align-items: center;
   justify-content: center;
   text-align: center;
 
-
   &::before {
     position: relative;
-
     content: "Coming soon (sorry!)";
     font-size: 2rem;
     font-weight: 400;
-    color: var(--text-color);
+    color: white;
+    paint-order: stroke fill;
+    -webkit-text-stroke: 4px black;
     text-shadow: 0 0 0.25rem var(--primary-color);
     user-select: none;
-    text-align: center;
     padding: 0.5rem;
     margin: 0;
+    place-self: center;
+    z-index: 4;
+  }
+
+  &::after {
+    position: absolute;
+    width: 100%;
+    height: 4rem;
+
+    /* yellow warning tape with repeating diagonal black stripes */
+    background-image: repeating-linear-gradient(
+      45deg,
+      black,
+      black 1rem,
+      yellow 1rem,
+      yellow 2rem
+    );
+
+    background-size: calc(200vw) 4rem;
 
     place-self: center;
-    text-align: center;
+    align-self: center;
+    vertical-align: center;
+    justify-self: center;
 
-    vertical-align: middle;
+    /* Ensure the background is larger than the visible area */
+    background-size: 200% 100%;
+    background-repeat: repeat;
+    background-position: 0 0;
 
-    z-index: 3;
+    animation: warning-tape-scrolling 2s linear infinite;
+  }
+}
+
+@keyframes warning-tape-scrolling {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: -100vw 0;
+
   }
 }
 

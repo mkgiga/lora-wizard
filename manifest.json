@@ -5,12 +5,19 @@
   "version": "1.0.0",
   "permissions": [
     "storage",
+    "system.storage",
+    "unlimitedStorage",
     "activeTab",
     "scripting",
     "sidePanel",
+    "runtime",
     "contextMenus",
     "webNavigation",
-    "tabs"
+    "tabs",
+    "clipboardWrite",
+    "clipboardRead",
+    "webRequest",
+    "webRequestBlocking"
   ],
 
   "action": {

@@ -85,7 +85,12 @@ function main() {
         const src = cloned.querySelector("img").src;
         const tags = cloned.querySelector("textarea").value.split(", ");
 
-        const newEntry = createImageEntry({ src, tags, target: entryList, calledByLoad: true });
+        const newEntry = createImageEntry({
+          src,
+          tags,
+          target: entryList,
+          calledByLoad: true,
+        });
 
         entryList.appendChild(newEntry);
       });
@@ -118,7 +123,7 @@ function main() {
   // project import
   document
     .querySelector(".btn-load")
-    .addEventListener("click", openProjectDialog);
+    .addEventListener("click", promptImportFiles);
 
   // project export
   document.querySelector(".btn-export").addEventListener("click", () => {
@@ -127,8 +132,6 @@ function main() {
 
   // searching the main entry list
   document.querySelector("#txt-search").addEventListener("input", onSearch);
-
-  
 
   document
     .querySelector("#btn-backup-current")
@@ -240,9 +243,9 @@ function main() {
           {
             text: "No",
             onclick: (e) => {
-              prompt.close();
+              prompt.remove();
             },
-          }
+          },
         ],
       });
     });
@@ -260,14 +263,15 @@ function main() {
             text: "Yes",
             onclick: (e) => {
               delete backups[date];
-              select.querySelector(`option[value="${date}"]`).remove();
+              const opt = select.querySelector(`option[value="${date}"]`);
+              murderElement(opt);
               save();
             },
           },
           {
             text: "No",
             onclick: (e) => {
-              prompt.close();
+              prompt.remove();
             },
           },
         ],
@@ -469,6 +473,11 @@ function onSearch(e) {
     entries.forEach((entry) => entry.setAttribute("hidden", ""));
   }
 
+  // first, hide all entries
+  for (const entry of entries) {
+    entry.setAttribute("hidden", "");
+  }
+
   const or = ["||", " OR "];
   const and = ["&&", " AND "];
 
@@ -506,6 +515,7 @@ function onSearch(e) {
     }
 
     if (tags.length === 0) {
+      entry.setAttribute("hidden", "");
       entry.removeAttribute("hidden");
     }
   }
@@ -778,15 +788,13 @@ function createTagCategory({ name = "Category", tags = [], emoji = "" }) {
         </div>
 
         <div class="tag-category-actions">
-        <button class="btn-category-add-tag material-icons">add</button>
-        <button class="btn-category-remove material-icons">delete</button>
-        <button class="btn-category-clear-tags material-icons">
-          clear_all
-        </button>
+          <button class="btn-category-add-tag material-icons">add</button>
+          <button class="btn-category-remove material-icons">delete</button>
+          <button class="btn-category-clear-tags material-icons">
+            clear_all
+          </button>
+        </div>
       </div>
-      </div>
-
-      
     </div>
   `;
 
@@ -1003,6 +1011,8 @@ function addImageEntries(
   ...entryInfos
 ) {
   const infos = [...entryInfos];
+
+  console.log("Image entries getting added: ", infos);
 
   function addImageEntry(entryInfo, calledByLoad = false) {
     const src = entryInfo.src;
@@ -1675,10 +1685,106 @@ async function download(filename = "exported.zip") {
 }
 
 /**
+ * Open existing files on the user's filesystem,
+ * or zip files containing images and tags.
+ */
+async function promptImportFiles() {
+
+  /**
+   * @type {FileSystemFileHandle[]}
+   */
+  const handle = await showOpenFilePicker();
+  
+  const zipFiles = [];
+  const textFiles = {};
+  const files = [];
+
+  for await (const fileHandle of handle) {
+    const file = await fileHandle.getFile();
+    const fileName = file.name;
+    const extension = fileName.split(".").pop();
+
+    if (extension === "zip") {
+      zipFiles.push(file);
+    } else if (extension === "txt") {
+      textFiles[fileName] = file;
+    } else {
+      files.push(file);
+    }
+
+    console.log("File: ", file);
+  }
+
+  // unpack the zip files
+
+  for await (const zipFile of zipFiles) {
+    const zip = await JSZip.loadAsync(zipFile);
+
+    // regardless of the file type, we load them anyway
+    // and put them in the files array
+    for await (const file of Object.values(zip.files)) {
+      const name = file.name;
+      const extension = name.split(".").pop();
+
+      if (extension === "txt") {
+        const tags = await file.async("text");
+        textFiles[name] = tags;
+      } else {
+        const blob = await file.async("blob");
+        const url = URL.createObjectURL(blob);
+        files.push({ name, url });
+      }
+
+      console.log("File: ", file);
+    }
+
+    console.log("Zip file loaded: ", zipFile);
+  }
+
+  // find pairs of files and tags.
+
+  const pairs = [];
+
+  for (const file of files) {
+    console.log("Now finding pairs for: ", file);
+    const name = file.name;
+    const extension = name.split(".").pop();
+
+    if (
+      extension === "png" ||
+      extension === "jpg" ||
+      extension === "jpeg" ||
+      extension === "webp"
+    ) {
+      let tagsFileName = name.replace(/\.(png|jpg|jpeg|webp)$/, ".txt");
+      let tags = textFiles[tagsFileName];
+      console.log("Tags file: ", tagsFileName, tags);
+      pairs.push({ file: file.url, tags });
+    }
+  }
+
+  // add the pairs to the image entries (only images for now)
+  const imagePairs = [];
+
+  for await (const pair of pairs) {
+    const file = pair.file;
+    const tags = pair.tags;
+
+    /** @todo filter out images that already exist in the dataset so we don't get duplicates */
+
+    const tagsText = tags || "";
+    const tagsArray = tagsText.split(", ");
+
+    imagePairs.push({ src: file, tags: tagsArray });
+  }
+
+  addImageEntries(document.querySelector(".image-entries"), ...imagePairs);
+}
+
+/**
  * Prompt the user to select a zip file to import
  */
 async function openProjectDialog() {
-
   // first, confirm if the user wants to save the current project
   const prompt = promptDialog({
     title: "Save current project?",
@@ -1689,13 +1795,13 @@ async function openProjectDialog() {
         text: "Yes",
         onclick: () => {
           save();
-          prompt.close();
+          prompt.remove();
         },
       },
       {
         text: "No",
         onclick: () => {
-          prompt.close();
+          prompt.remove();
         },
       },
     ],
@@ -1705,7 +1811,7 @@ async function openProjectDialog() {
   input.type = "file";
   input.accept = ".zip";
   input.multiple = true;
-  
+
   input.addEventListener("change", async (e) => {
     const files = e.target.files;
     const entries = [];
@@ -1717,7 +1823,9 @@ async function openProjectDialog() {
 
       for (const imageFile of imageFiles) {
         const fileName = imageFile.name.replace(/\.png$/, "");
-        const tagFile = tagFiles.find((file) => file.name === `${fileName}.txt`);
+        const tagFile = tagFiles.find(
+          (file) => file.name === `${fileName}.txt`
+        );
 
         if (!tagFile) {
           // just add the image without empty tags
@@ -1726,7 +1834,10 @@ async function openProjectDialog() {
         }
 
         const tags = await tagFile.async("text");
-        entries.push({ src: imageFile.name, tags: tags.split(", ").map((tag) => tag.trim().replace(/, $/, "")) });
+        entries.push({
+          src: imageFile.name,
+          tags: tags.split(", ").map((tag) => tag.trim().replace(/, $/, "")),
+        });
       }
 
       addImageEntries(document.querySelector(".image-entries"), ...entries);
@@ -1737,8 +1848,6 @@ async function openProjectDialog() {
 
   return input;
 }
-
-
 
 function syncImageAttributes() {
   const entries = document.querySelectorAll(".image-entry");
@@ -1782,13 +1891,13 @@ function promptDialog({
     {
       text: "Yes",
       onclick: (e) => {
-        prompt.close();
+        prompt.remove();
       },
     },
     {
       text: "No",
       onclick: (e) => {
-        prompt.close();
+        prompt.remove();
       },
     },
   ],
@@ -1802,7 +1911,7 @@ function promptDialog({
           <button class="btn-close material-icons">close</button>
         </div>
         <div class="prompt-message">
-          <p>${message}</p> 
+          <p>${message}</p>
         </div>
         <div class="prompt-actions">
           ${options.map((option) => `<button>${option.text}</button>`).join("")}
@@ -1820,6 +1929,8 @@ function promptDialog({
       });
     } else {
       btn.addEventListener("click", (e) => {
+        let shouldClose = true;
+
         const text = e.target.textContent;
         const option = options.find((opt) => opt.text === text);
 
@@ -1827,7 +1938,19 @@ function promptDialog({
           throw new Error("Option not found: ", text);
         }
 
-        option.onclick.call({ prompt });
+        option.onclick.call(
+          {
+            prompt,
+            preventClose: () => {
+              shouldClose = false;
+            },
+          },
+          e
+        );
+
+        if (shouldClose) {
+          prompt.remove();
+        }
       });
     }
   }
@@ -1854,9 +1977,7 @@ function backupCurrentProject() {
       .value.split(", ")
       .map((tag) => tag.trim())
       .filter((tag) => tag !== "");
-    const pageUrl = entry
-      .querySelector("[page-url]")
-      .getAttribute("page-url");
+    const pageUrl = entry.querySelector("[page-url]").getAttribute("page-url");
 
     images.push({ src: img, tags, pageUrl });
   });
@@ -1894,6 +2015,63 @@ function backupCurrentProject() {
   select.value = date;
 
   save();
+}
+
+/**
+ * Animates the 'death' of an element, as if it died and became a ghost, floating up
+ * and fading out.
+ * @param {HTMLElement} element
+ */
+function murderElement(element, duration = 4000) {
+  const rect = element.getBoundingClientRect();
+
+  const container = html`<div></div>`;
+
+  container.style.position = "absolute";
+  container.style.top = `${rect.top}px`;
+  container.style.left = `${rect.left}px`;
+  container.style.width = `${rect.width}px`;
+  container.style.height = `${rect.height}px`;
+
+  container.style.overflow = "hidden";
+  container.style.pointerEvents = "none";
+  container.style.zIndex = "9999";
+  container.style.display = "flex";
+  container.style.margin = "0";
+  container.style.padding = "0";
+  container.style.outline = "none";
+  container.style.border = "none";
+
+  const cloned = element.cloneNode(true);
+
+  cloned.style.position = "absolute";
+  cloned.style.top = "0";
+  cloned.style.left = "0";
+  cloned.style.width = "100%";
+  cloned.style.height = "100%";
+  cloned.style.transition = "transform 0.5s, opacity 0.5s";
+  cloned.style.pointerEvents = "none";
+  cloned.style.zIndex = "9999";
+
+  container.appendChild(cloned);
+
+  document.body.appendChild(container);
+
+  container.animate(
+    [
+      { transform: "translateY(0)", opacity: 1 },
+      { transform: "translateY(-100%)", opacity: 0 },
+    ],
+    {
+      duration,
+      easing: "linear",
+      fill: "forwards",
+    }
+  ).onfinish = () => {
+    container.remove();
+  };
+
+  element.remove();
 }
 
 document.addEventListener("DOMContentLoaded", main);
